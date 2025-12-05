@@ -20,6 +20,10 @@ services:
         value: 587
       - key: MAIL_USE_TLS
         value: True
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
       - key: WHATSAPP_VERIFY_TOKEN
         value: inventech_webhook_2024_secure
       - key: PYTHON_VERSION
