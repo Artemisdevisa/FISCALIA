@@ -9,7 +9,7 @@ def enviar_email_async(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
-            print(f"✅ Email enviado correctamente")
+            print("✅ Email enviado correctamente")
         except Exception as e:
             print(f"❌ Error al enviar email: {str(e)}")
 
@@ -35,6 +35,18 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
             'baja': '#28a745'
         }.get(incidencia.severidad, '#6c757d')
         
+        # Construir HTML sin emojis directos en f-string
+        servicios_row = ''
+        if incidencia.servicios_afectados:
+            servicios_row = f'''<tr>
+                <td style="color: #666;"><strong>&#x1F527; Servicios Afectados:</strong></td>
+                <td style="color: #2c3e50;">{incidencia.servicios_afectados}</td>
+            </tr>'''
+        
+        descripcion_html = ''
+        if incidencia.descripcion:
+            descripcion_html = f'<p style="color: #555; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0; padding: 15px; background-color: white; border-radius: 4px;">{incidencia.descripcion}</p>'
+        
         msg.html = f'''
         <!DOCTYPE html>
         <html>
@@ -52,7 +64,7 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
                             <tr>
                                 <td style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 30px; text-align: center;">
                                     <h1 style="color: white; margin: 0; font-size: 24px; font-weight: bold;">
-                                        🔔 Nueva Incidencia Asignada
+                                        &#x1F514; Nueva Incidencia Asignada
                                     </h1>
                                     <p style="color: #ecf0f1; margin: 10px 0 0 0; font-size: 14px;">
                                         Sistema INVENTECH - Fiscalía de La Libertad
@@ -94,26 +106,23 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
                                                 </div>
                                                 
                                                 <!-- DESCRIPCIÓN -->
-                                                {f'<p style="color: #555; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0; padding: 15px; background-color: white; border-radius: 4px;">{incidencia.descripcion}</p>' if incidencia.descripcion else ''}
+                                                {descripcion_html}
                                                 
                                                 <!-- DETALLES -->
                                                 <table width="100%" cellpadding="8" cellspacing="0" style="font-size: 13px;">
                                                     <tr>
-                                                        <td style="color: #666; width: 40%;"><strong>📦 Item Afectado:</strong></td>
+                                                        <td style="color: #666; width: 40%;"><strong>&#x1F4E6; Item Afectado:</strong></td>
                                                         <td style="color: #2c3e50;"><strong>{item.codigo}</strong> - {item.nombre}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td style="color: #666;"><strong>📅 Fecha de Incidencia:</strong></td>
+                                                        <td style="color: #666;"><strong>&#x1F4C5; Fecha de Incidencia:</strong></td>
                                                         <td style="color: #2c3e50;">{incidencia.fecha_incidencia.strftime('%d/%m/%Y %H:%M')}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td style="color: #666;"><strong>👥 Usuarios Afectados:</strong></td>
+                                                        <td style="color: #666;"><strong>&#x1F465; Usuarios Afectados:</strong></td>
                                                         <td style="color: #2c3e50;">{incidencia.usuarios_afectados or 'No especificado'}</td>
                                                     </tr>
-                                                    {f'''<tr>
-                                                        <td style="color: #666;"><strong>🔧 Servicios Afectados:</strong></td>
-                                                        <td style="color: #2c3e50;">{incidencia.servicios_afectados}</td>
-                                                    </tr>''' if incidencia.servicios_afectados else ''}
+                                                    {servicios_row}
                                                 </table>
                                                 
                                             </td>
@@ -126,7 +135,7 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
                                             <td align="center" style="padding: 20px 0;">
                                                 <a href="http://127.0.0.1:5000/incidencias" 
                                                    style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
-                                                    Ver Incidencia en el Sistema →
+                                                    Ver Incidencia en el Sistema &rarr;
                                                 </a>
                                             </td>
                                         </tr>
@@ -137,7 +146,7 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
                                         <tr>
                                             <td style="padding: 15px;">
                                                 <p style="color: #856404; font-size: 13px; margin: 0; line-height: 1.6;">
-                                                    <strong>⚠️ Importante:</strong> Por favor, atienda esta incidencia lo antes posible. El sistema calculará automáticamente las métricas de cumplimiento de SLA.
+                                                    <strong>&#x26A0; Importante:</strong> Por favor, atienda esta incidencia lo antes posible. El sistema calculará automáticamente las métricas de cumplimiento de SLA.
                                                 </p>
                                             </td>
                                         </tr>
@@ -153,10 +162,10 @@ def enviar_notificacion_incidencia(app, tecnico, incidencia, item):
                                         Este es un mensaje automático del Sistema INVENTECH
                                     </p>
                                     <p style="color: #6c757d; font-size: 12px; margin: 0;">
-                                        <strong>Fiscalía de La Libertad</strong> • Distrito Fiscal de La Libertad
+                                        <strong>Fiscalía de La Libertad</strong> &bull; Distrito Fiscal de La Libertad
                                     </p>
                                     <p style="color: #6c757d; font-size: 11px; margin: 8px 0 0 0;">
-                                        Av. América Oeste 2470, Trujillo • (044) 608-600
+                                        Av. América Oeste 2470, Trujillo &bull; (044) 608-600
                                     </p>
                                 </td>
                             </tr>
@@ -196,7 +205,7 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
     
     try:
         msg = Message(
-            subject=f'🚨 ALERTA CRÍTICA - {item.codigo}: {item.nombre}',
+            subject=f'ALERTA CRITICA - {item.codigo}: {item.nombre}',
             recipients=destinatarios
         )
         
@@ -208,13 +217,26 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
             'baja': '#28a745'
         }.get(alerta.nivel_urgencia, '#6c757d')
         
-        # Icono según urgencia
+        # Icono según urgencia (código HTML)
         icono_urgencia = {
-            'critica': '🚨',
-            'alta': '⚠️',
-            'media': '⚡',
-            'baja': 'ℹ️'
-        }.get(alerta.nivel_urgencia, '🔔')
+            'critica': '&#x1F6A8;',
+            'alta': '&#x26A0;',
+            'media': '&#x26A1;',
+            'baja': '&#x2139;'
+        }.get(alerta.nivel_urgencia, '&#x1F514;')
+        
+        # Construir row de incidencias pendientes
+        incidencias_row = ''
+        if alerta.incidencias_pendientes > 0:
+            incidencias_row = f'''<tr>
+                <td style="color: #666;"><strong>Incidencias Pendientes:</strong></td>
+                <td style="color: #dc3545; font-weight: bold;">{alerta.incidencias_pendientes}</td>
+            </tr>'''
+        
+        # Construir item de lista para incidencias pendientes
+        incidencias_li = ''
+        if alerta.incidencias_pendientes > 0:
+            incidencias_li = f'<li style="font-weight: bold; color: #d32f2f;">Resolver las {alerta.incidencias_pendientes} incidencias pendientes</li>'
         
         msg.html = f'''
         <!DOCTYPE html>
@@ -251,7 +273,7 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                         <tr>
                                             <td style="padding: 15px;">
                                                 <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6; font-weight: 600;">
-                                                    ⚠️ Se ha generado una alerta automática que requiere su atención inmediata
+                                                    &#x26A0; Se ha generado una alerta automática que requiere su atención inmediata
                                                 </p>
                                             </td>
                                         </tr>
@@ -259,7 +281,7 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                     
                                     <!-- INFORMACIÓN DEL ITEM -->
                                     <h2 style="color: #2c3e50; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
-                                        📦 Item Afectado
+                                        &#x1F4E6; Item Afectado
                                     </h2>
                                     
                                     <table width="100%" cellpadding="8" cellspacing="0" style="font-size: 14px; margin-bottom: 25px;">
@@ -283,7 +305,7 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                     
                                     <!-- DETALLES DE LA ALERTA -->
                                     <h2 style="color: #2c3e50; font-size: 18px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
-                                        🔔 Detalles de la Alerta
+                                        &#x1F514; Detalles de la Alerta
                                     </h2>
                                     
                                     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-left: 4px solid {color_urgencia}; border-radius: 6px; margin-bottom: 25px;">
@@ -313,10 +335,7 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                             <td style="color: #666;"><strong>Fecha de Creación:</strong></td>
                                             <td style="color: #2c3e50;">{alerta.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S')}</td>
                                         </tr>
-                                        {f'''<tr>
-                                            <td style="color: #666;"><strong>Incidencias Pendientes:</strong></td>
-                                            <td style="color: #dc3545; font-weight: bold;">{alerta.incidencias_pendientes}</td>
-                                        </tr>''' if alerta.incidencias_pendientes > 0 else ''}
+                                        {incidencias_row}
                                     </table>
                                     
                                     <!-- BOTONES DE ACCIÓN -->
@@ -325,11 +344,11 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                             <td align="center" style="padding: 20px 0;">
                                                 <a href="http://127.0.0.1:5000/alertas" 
                                                    style="display: inline-block; background: linear-gradient(135deg, {color_urgencia} 0%, #a71d2a 100%); color: white; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); margin-right: 10px;">
-                                                    🚨 Ver Alerta Ahora
+                                                    &#x1F6A8; Ver Alerta Ahora
                                                 </a>
                                                 <a href="http://127.0.0.1:5000/incidencias" 
                                                    style="display: inline-block; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(44, 62, 80, 0.4);">
-                                                    📋 Ver Incidencias
+                                                    &#x1F4CB; Ver Incidencias
                                                 </a>
                                             </td>
                                         </tr>
@@ -340,14 +359,14 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                         <tr>
                                             <td style="padding: 15px;">
                                                 <p style="color: #1565c0; font-size: 13px; margin: 0 0 10px 0; font-weight: bold;">
-                                                    💡 Acciones Recomendadas:
+                                                    &#x1F4A1; Acciones Recomendadas:
                                                 </p>
                                                 <ul style="color: #1976d2; font-size: 12px; margin: 0; padding-left: 20px; line-height: 1.8;">
                                                     <li>Revisar el estado actual del item en el sistema</li>
                                                     <li>Verificar las incidencias asociadas</li>
                                                     <li>Implementar medidas correctivas inmediatas</li>
                                                     <li>Documentar las acciones realizadas</li>
-                                                    {f'<li style="font-weight: bold; color: #d32f2f;">Resolver las {alerta.incidencias_pendientes} incidencias pendientes</li>' if alerta.incidencias_pendientes > 0 else ''}
+                                                    {incidencias_li}
                                                 </ul>
                                             </td>
                                         </tr>
@@ -363,10 +382,10 @@ def enviar_notificacion_alerta_critica(app, alerta, item, destinatarios):
                                         Este es un mensaje automático generado por el Sistema INVENTECH
                                     </p>
                                     <p style="color: #bdc3c7; font-size: 12px; margin: 0;">
-                                        <strong>Fiscalía de La Libertad</strong> • Distrito Fiscal de La Libertad
+                                        <strong>Fiscalía de La Libertad</strong> &bull; Distrito Fiscal de La Libertad
                                     </p>
                                     <p style="color: #95a5a6; font-size: 11px; margin: 8px 0 0 0;">
-                                        Av. América Oeste 2470, Trujillo • (044) 608-600
+                                        Av. América Oeste 2470, Trujillo &bull; (044) 608-600
                                     </p>
                                 </td>
                             </tr>
