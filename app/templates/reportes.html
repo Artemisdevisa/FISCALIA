@@ -1,0 +1,1222 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-9">
+                <h1 class="fw-bold mb-2" style="font-size: 2rem; line-height: 1.3;">
+                    Reportes de Incidencias
+                </h1>
+                <p class="mb-0" style="font-size: 1rem; opacity: 0.9; line-height: 1.6; max-width: 700px;">
+                    Análisis detallado de incidencias por item con estado de resolución y cumplimiento SLA
+                </p>
+            </div>
+            <div class="col-lg-3 text-lg-end mt-3 mt-lg-0">
+                <button class="btn btn-light px-4 py-2" onclick="exportarPDF()" style="font-weight: 500;">
+                    <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BUSCADOR Y FILTROS COMBINADOS -->
+<section class="py-4" style="background-color: #f8f9fa;">
+    <div class="container-fluid">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                
+                <!-- BUSCADOR PRINCIPAL -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px;">
+                        <i class="fas fa-search me-2"></i>Buscar Item
+                    </label>
+                    <div class="position-relative">
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="inputBuscar" 
+                               placeholder="🔍 Escriba código, nombre o categoría del producto o servicio..."
+                               autocomplete="off"
+                               style="padding-left: 45px; border: 2px solid #dee2e6; font-size: 15px; height: 50px;">
+                        <i class="fas fa-search position-absolute" style="left: 16px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-size: 16px;"></i>
+                    </div>
+                    
+                    <!-- RESULTADOS DE BÚSQUEDA -->
+                    <div id="resultadosBusqueda" class="mt-2" style="display: none; max-height: 350px; overflow-y: auto; border: 2px solid #dee2e6; border-radius: 8px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                    
+                    <small class="text-muted mt-1 d-block" style="font-size: 12px;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Escriba al menos 2 caracteres para buscar. Presione ESC para limpiar.
+                    </small>
+                </div>
+                
+                <hr class="my-3">
+                
+                <!-- FILTROS EN UNA SOLA FILA -->
+                <div class="row g-2 align-items-end">
+                    <!-- TIPO -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 11px;">TIPO</label>
+                        <select class="form-select form-select-sm" id="filtroTipo" style="height: 38px;">
+                            <option value="">Todos</option>
+                            <option value="producto">📦 Productos</option>
+                            <option value="servicio">⚙️ Servicios</option>
+                        </select>
+                    </div>
+                    
+                    <!-- CATEGORÍA -->
+                    <div class="col-lg-3 col-md-3 col-6">
+                        <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 11px;">CATEGORÍA</label>
+                        <select class="form-select form-select-sm" id="filtroCategoria" style="height: 38px;">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- ESTADO SLA -->
+                    <div class="col-lg-2 col-md-2 col-4">
+                        <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 11px;">SLA</label>
+                        <select class="form-select form-select-sm" id="filtroSLA" style="height: 38px;">
+                            <option value="">Todos</option>
+                            <option value="verde">✓ Verde</option>
+                            <option value="amarillo">⚠ Amarillo</option>
+                            <option value="rojo">✗ Rojo</option>
+                        </select>
+                    </div>
+                    
+                    <!-- INCIDENCIAS -->
+                    <div class="col-lg-2 col-md-2 col-4">
+                        <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 11px;">INCIDENCIAS</label>
+                        <select class="form-select form-select-sm" id="filtroIncidencias" style="height: 38px;">
+                            <option value="">Todos</option>
+                            <option value="con_activas">Con Activas</option>
+                            <option value="sin_activas">Sin Activas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- ORDENAR -->
+                    <div class="col-lg-2 col-md-2 col-4">
+                        <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 11px;">ORDENAR</label>
+                        <select class="form-select form-select-sm" id="filtroOrden" style="height: 38px;">
+                            <option value="codigo">Código</option>
+                            <option value="nombre">Nombre</option>
+                            <option value="activas_desc">Más Activas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- LIMPIAR -->
+                    <div class="col-lg-1 col-md-12">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="limpiarFiltros()" title="Limpiar filtros" style="height: 38px;">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- ESTADÍSTICAS INLINE -->
+                <div class="row g-2 mt-3 text-center">
+                    <div class="col-3">
+                        <div class="small text-muted mb-1" style="font-size: 11px;">ITEMS</div>
+                        <div class="fw-bold" style="color: #2c3e50; font-size: 20px;" id="statItems">0</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="small text-muted mb-1" style="font-size: 11px;">ACTIVAS</div>
+                        <div class="fw-bold text-danger" style="font-size: 20px;" id="statIncidenciasActivas">0</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="small text-muted mb-1" style="font-size: 11px;">RESUELTAS</div>
+                        <div class="fw-bold text-success" style="font-size: 20px;" id="statIncidenciasResueltas">0</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="small text-muted mb-1" style="font-size: 11px;">CUMPLIMIENTO</div>
+                        <div class="fw-bold" style="color: #2c3e50; font-size: 20px;" id="statCumplimiento">0%</div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TABLA DE RESULTADOS -->
+<section class="py-4" style="background-color: white;">
+    <div class="container-fluid">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold mb-0" style="color: #2c3e50;">
+                    <i class="fas fa-table me-2"></i>Reporte Detallado de Incidencias
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                
+                <!-- LOADING -->
+                <div id="loadingReporte" class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="text-muted">Cargando reporte...</p>
+                </div>
+                
+                <!-- SIN RESULTADOS -->
+                <div id="sinResultados" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-inbox fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                    <h5 class="fw-bold mb-2" style="color: #2c3e50;">No se encontraron resultados</h5>
+                    <p class="text-muted">Intente ajustar los filtros de búsqueda o limpiar los criterios</p>
+                </div>
+                
+                <!-- TABLA -->
+                <div id="tablaReporte" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                <tr>
+                                    <th class="fw-semibold text-muted py-3 px-4" style="font-size: 12px;">ITEM</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">TIPO</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">SLA</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">ACTIVAS</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">RESUELTAS</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">TOTAL</th>
+                                    <th class="fw-semibold text-muted py-3 text-center" style="font-size: 12px;">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTabla">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: DETALLE DE INCIDENCIAS -->
+<div class="modal fade" id="modalDetalleIncidencias" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; border: none;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1" id="modalTitulo">
+                        <i class="fas fa-list-ul me-2"></i>Detalle de Incidencias
+                    </h5>
+                    <p class="mb-0 small" style="opacity: 0.9;" id="modalSubtitulo"></p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: #f8f9fa;">
+                
+                <!-- TABS -->
+                <ul class="nav nav-pills mb-4" id="tabsIncidencias" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-activas" data-bs-toggle="tab" data-bs-target="#contenido-activas" type="button" style="border-radius: 8px;">
+                            <i class="fas fa-exclamation-circle me-2"></i>Activas (<span id="countActivas">0</span>)
+                        </button>
+                    </li>
+                    <li class="nav-item ms-2" role="presentation">
+                        <button class="nav-link" id="tab-resueltas" data-bs-toggle="tab" data-bs-target="#contenido-resueltas" type="button" style="border-radius: 8px;">
+                            <i class="fas fa-check-circle me-2"></i>Resueltas (<span id="countResueltas">0</span>)
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- CONTENIDO TABS -->
+                <div class="tab-content" id="tabContent">
+                    <div class="tab-pane fade show active" id="contenido-activas">
+                        <div id="listaActivasContent"></div>
+                    </div>
+                    <div class="tab-pane fade" id="contenido-resueltas">
+                        <div id="listaResueltasContent"></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETALLE COMPLETO DE INCIDENCIA RESUELTA -->
+<div class="modal fade" id="modalDetalleResolucion" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1">
+                        <i class="fas fa-check-circle me-2"></i>Detalle de Resolución
+                    </h5>
+                    <p class="mb-0 small" style="opacity: 0.9;" id="modalResolucionSubtitulo"></p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                
+                <!-- INFORMACIÓN DE INCIDENCIA -->
+                <div class="card border-0 shadow-sm mb-3" style="background: #f8f9fa;">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                            <i class="fas fa-info-circle me-2"></i>Información de la Incidencia
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block mb-1">Item Afectado</small>
+                                <span class="fw-bold" id="detalleItemCodigo"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block mb-1">Fecha de Incidencia</small>
+                                <span class="fw-bold" id="detalleFechaIncidencia"></span>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Título</small>
+                                <span class="fw-bold" id="detalleTitulo"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- INFORMACIÓN DE RESOLUCIÓN -->
+                <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #28a745 !important;">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 text-success">
+                            <i class="fas fa-tools me-2"></i>Resolución
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block mb-1">Fecha de Resolución</small>
+                                <span class="fw-bold text-success" id="detalleFechaResolucion"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block mb-1">Resuelto por</small>
+                                <span class="fw-bold" id="detalleResuelto"></span>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-2">Comentario de Resolución</small>
+                                <div class="p-3" style="background: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                                    <p class="mb-0" id="detalleComentario" style="line-height: 1.6;"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- IMAGEN DE RESOLUCIÓN -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                            <i class="fas fa-image me-2"></i>Evidencia de Resolución
+                        </h6>
+                        <div id="detalleImagenContainer" class="text-center">
+                            <!-- Se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="modal-footer" style="background-color: #f8f9fa;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.item-row-reporte {
+    transition: all 0.2s;
+}
+
+.item-row-reporte:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.incidencia-card {
+    border-left: 4px solid #dee2e6;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+    background: white;
+    border-radius: 8px;
+    position: relative;
+}
+
+.incidencia-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(4px);
+}
+
+.incidencia-critica { border-left-color: #dc3545; }
+.incidencia-alta { border-left-color: #ffc107; }
+.incidencia-media { border-left-color: #17a2b8; }
+.incidencia-baja { border-left-color: #28a745; }
+
+.resultado-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.resultado-item:hover {
+    background-color: #f0f7ff;
+    border-left: 4px solid #2c3e50;
+    padding-left: 14px;
+}
+
+.resultado-item:last-child {
+    border-bottom: none;
+}
+
+.nav-pills .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    padding: 10px 20px;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #2c3e50;
+}
+
+/* ✅ NUEVO: Botón de ver detalle en incidencias resueltas */
+.btn-ver-detalle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.incidencia-card:hover .btn-ver-detalle {
+    opacity: 1;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// ========================================
+// VARIABLES GLOBALES
+// ========================================
+let datosReporte = [];
+let datosOriginales = [];
+let itemSeleccionado = null;
+
+// ========================================
+// CARGAR DATOS AL INICIO
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    cargarReporte();
+    configurarBuscador();
+    configurarEventosFiltros();
+});
+
+// ========================================
+// CONFIGURAR EVENTOS DE FILTROS
+// ========================================
+function configurarEventosFiltros() {
+    document.getElementById('filtroTipo').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroCategoria').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroSLA').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroIncidencias').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroOrden').addEventListener('change', aplicarFiltros);
+}
+
+// ========================================
+// CONFIGURAR BUSCADOR
+// ========================================
+function configurarBuscador() {
+    const inputBuscar = document.getElementById('inputBuscar');
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    
+    inputBuscar.addEventListener('input', function() {
+        const termino = this.value.toLowerCase().trim();
+        
+        if (termino.length === 0) {
+            resultadosBusqueda.style.display = 'none';
+            resultadosBusqueda.innerHTML = '';
+            itemSeleccionado = null;
+            aplicarFiltros();
+            return;
+        }
+        
+        if (termino.length < 2) {
+            return;
+        }
+        
+        // Filtrar items
+        const resultados = datosOriginales.filter(item => {
+            return item.codigo.toLowerCase().includes(termino) ||
+                   item.nombre.toLowerCase().includes(termino) ||
+                   item.tipo.toLowerCase().includes(termino) ||
+                   item.categoria.toLowerCase().includes(termino);
+        });
+        
+        mostrarResultadosBusqueda(resultados);
+    });
+    
+    // Cerrar con ESC
+    inputBuscar.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            resultadosBusqueda.style.display = 'none';
+            itemSeleccionado = null;
+            aplicarFiltros();
+        }
+    });
+    
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!inputBuscar.contains(e.target) && !resultadosBusqueda.contains(e.target)) {
+            resultadosBusqueda.style.display = 'none';
+        }
+    });
+}
+
+// ========================================
+// MOSTRAR RESULTADOS DE BÚSQUEDA
+// ========================================
+function mostrarResultadosBusqueda(resultados) {
+    const contenedor = document.getElementById('resultadosBusqueda');
+    
+    if (resultados.length === 0) {
+        contenedor.innerHTML = '<div class="p-3 text-center text-muted"><i class="fas fa-search me-2"></i>No se encontraron resultados</div>';
+        contenedor.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    resultados.slice(0, 10).forEach(item => {
+        const icono = item.tipo === 'producto' ? '📦' : '⚙️';
+        const colorSLA = item.semaforo_sla === 'verde' ? 'success' : item.semaforo_sla === 'amarillo' ? 'warning' : 'danger';
+        
+        html += `
+            <div class="resultado-item" onclick="seleccionarItemBusqueda(${item.id})">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold" style="color: #2c3e50; font-size: 14px;">${icono} ${item.codigo}</div>
+                        <div class="small text-muted mt-1" style="line-height: 1.4;">${item.nombre}</div>
+                        <div class="mt-2">
+                            <span class="badge bg-${item.tipo === 'producto' ? 'primary' : 'success'} me-1" style="font-size: 10px;">${item.tipo.toUpperCase()}</span>
+                            <span class="badge bg-${colorSLA}" style="font-size: 10px;">SLA: ${item.semaforo_sla.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="text-end ms-3">
+                        <div class="badge bg-danger mb-1" style="font-size: 10px;">${item.incidencias_activas} activas</div>
+                        <br>
+                        <div class="badge bg-success" style="font-size: 10px;">${item.incidencias_resueltas} resueltas</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    contenedor.innerHTML = html;
+    contenedor.style.display = 'block';
+}
+
+// ========================================
+// SELECCIONAR ITEM DE BÚSQUEDA
+// ========================================
+function seleccionarItemBusqueda(itemId) {
+    itemSeleccionado = itemId;
+    const item = datosOriginales.find(i => i.id === itemId);
+    
+    if (item) {
+        const icono = item.tipo === 'producto' ? '📦' : '⚙️';
+        document.getElementById('inputBuscar').value = `${icono} ${item.codigo} - ${item.nombre}`;
+    }
+    
+    document.getElementById('resultadosBusqueda').style.display = 'none';
+    aplicarFiltros();
+}
+
+// ========================================
+// CARGAR REPORTE
+// ========================================
+function cargarReporte() {
+    document.getElementById('loadingReporte').style.display = 'block';
+    document.getElementById('sinResultados').style.display = 'none';
+    document.getElementById('tablaReporte').style.display = 'none';
+    
+    fetch('/api/reportes/datos')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                datosOriginales = data.items;
+                datosReporte = data.items;
+                
+                llenarFiltroCategorias();
+                aplicarFiltros();
+            } else {
+                mostrarError('Error al cargar datos');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError('Error de conexión');
+        });
+}
+
+// ========================================
+// LLENAR FILTRO DE CATEGORÍAS
+// ========================================
+function llenarFiltroCategorias() {
+    const categorias = [...new Set(datosOriginales.map(item => item.categoria).filter(c => c))];
+    const select = document.getElementById('filtroCategoria');
+    
+    // Limpiar opciones existentes excepto la primera
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    
+    categorias.sort().forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+    });
+}
+
+// ========================================
+// APLICAR FILTROS
+// ========================================
+function aplicarFiltros() {
+    const tipo = document.getElementById('filtroTipo').value;
+    const categoria = document.getElementById('filtroCategoria').value;
+    const sla = document.getElementById('filtroSLA').value;
+    const incidencias = document.getElementById('filtroIncidencias').value;
+    const orden = document.getElementById('filtroOrden').value;
+    
+    datosReporte = datosOriginales.filter(item => {
+        // Filtro de búsqueda específica
+        if (itemSeleccionado && item.id !== itemSeleccionado) return false;
+        
+        if (tipo && item.tipo !== tipo) return false;
+        if (categoria && item.categoria !== categoria) return false;
+        if (sla && item.semaforo_sla !== sla) return false;
+        
+        if (incidencias === 'con_activas' && item.incidencias_activas === 0) return false;
+        if (incidencias === 'sin_activas' && item.incidencias_activas > 0) return false;
+        
+        return true;
+    });
+    
+    // Ordenar
+    datosReporte.sort((a, b) => {
+        switch(orden) {
+            case 'codigo':
+                return a.codigo.localeCompare(b.codigo);
+            case 'nombre':
+                return a.nombre.localeCompare(b.nombre);
+            case 'activas_desc':
+                return b.incidencias_activas - a.incidencias_activas;
+            default:
+                return 0;
+        }
+    });
+    
+    actualizarEstadisticas();
+    renderizarTabla();
+}
+
+// ========================================
+// ACTUALIZAR ESTADÍSTICAS
+// ========================================
+function actualizarEstadisticas() {
+    const totalItems = datosReporte.length;
+    const totalActivas = datosReporte.reduce((sum, item) => sum + item.incidencias_activas, 0);
+    const totalResueltas = datosReporte.reduce((sum, item) => sum + item.incidencias_resueltas, 0);
+    const cumplimientoPromedio = datosReporte.length > 0 
+        ? Math.round(datosReporte.reduce((sum, item) => sum + item.cumplimiento_sla, 0) / datosReporte.length)
+        : 0;
+    
+    document.getElementById('statItems').textContent = totalItems;
+    document.getElementById('statIncidenciasActivas').textContent = totalActivas;
+    document.getElementById('statIncidenciasResueltas').textContent = totalResueltas;
+    document.getElementById('statCumplimiento').textContent = cumplimientoPromedio + '%';
+}
+
+// ========================================
+// RENDERIZAR TABLA
+// ========================================
+function renderizarTabla() {
+    const tbody = document.getElementById('bodyTabla');
+    
+    if (datosReporte.length === 0) {
+        document.getElementById('loadingReporte').style.display = 'none';
+        document.getElementById('sinResultados').style.display = 'block';
+        document.getElementById('tablaReporte').style.display = 'none';
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    datosReporte.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'item-row-reporte';
+        tr.style.borderBottom = '1px solid #f0f0f0';
+        
+        const iconoTipo = item.tipo === 'producto' ? '📦' : '⚙️';
+        const badgeTipo = item.tipo === 'producto' 
+            ? '<span class="badge px-2 py-1" style="background-color: #007bff; color: white;">PRODUCTO</span>'
+            : '<span class="badge px-2 py-1" style="background-color: #28a745; color: white;">SERVICIO</span>';
+        
+        let badgeSLA = '';
+        if (item.semaforo_sla === 'verde') {
+            badgeSLA = '<span class="badge bg-success px-2 py-1"><i class="fas fa-check-circle me-1"></i>VERDE</span>';
+        } else if (item.semaforo_sla === 'amarillo') {
+            badgeSLA = '<span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-exclamation-triangle me-1"></i>AMARILLO</span>';
+        } else {
+            badgeSLA = '<span class="badge bg-danger px-2 py-1"><i class="fas fa-times-circle me-1"></i>ROJO</span>';
+        }
+        
+        tr.innerHTML = `
+            <td class="px-4 py-3">
+                <div>
+                    <span class="fw-bold d-block mb-1" style="color: #2c3e50; font-size: 14px;">${iconoTipo} ${item.codigo}</span>
+                    <small class="text-muted" style="line-height: 1.4; font-size: 12px;">${item.nombre}</small>
+                </div>
+            </td>
+            <td class="text-center py-3">${badgeTipo}</td>
+            <td class="text-center py-3">${badgeSLA}</td>
+            <td class="text-center py-3">
+                <span class="badge ${item.incidencias_activas > 0 ? 'bg-danger' : 'bg-secondary'} px-2 py-1" style="font-size: 12px;">${item.incidencias_activas}</span>
+            </td>
+            <td class="text-center py-3">
+                <span class="badge bg-success px-2 py-1" style="font-size: 12px;">${item.incidencias_resueltas}</span>
+            </td>
+            <td class="text-center py-3">
+                <span class="badge bg-secondary px-2 py-1" style="font-size: 12px;">${item.incidencias_activas + item.incidencias_resueltas}</span>
+            </td>
+            <td class="text-center py-3">
+                <button class="btn btn-sm btn-primary px-3" onclick='verDetalleIncidencias(${item.id}, "${item.codigo.replace(/'/g, "\\'")}",  "${item.nombre.replace(/'/g, "\\'")}")'>
+                    <i class="fas fa-eye me-1"></i>Ver Detalle
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('loadingReporte').style.display = 'none';
+    document.getElementById('tablaReporte').style.display = 'block';
+}
+
+// ========================================
+// VER DETALLE DE INCIDENCIAS
+// ========================================
+function verDetalleIncidencias(itemId, codigo, nombre) {
+    document.getElementById('modalTitulo').innerHTML = `<i class="fas fa-list-ul me-2"></i>${codigo}`;
+    document.getElementById('modalSubtitulo').textContent = nombre;
+    
+    fetch(`/api/reportes/incidencias/${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('countActivas').textContent = data.activas.length;
+                document.getElementById('countResueltas').textContent = data.resueltas.length;
+                
+                renderizarIncidencias(data.activas, 'listaActivasContent', 'activa');
+                renderizarIncidencias(data.resueltas, 'listaResueltasContent', 'resuelta');
+                
+                const modal = new bootstrap.Modal(document.getElementById('modalDetalleIncidencias'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error al cargar incidencias');
+        });
+}
+
+// ========================================
+// RENDERIZAR INCIDENCIAS
+// ========================================
+function renderizarIncidencias(incidencias, contenedorId, tipo) {
+    const contenedor = document.getElementById(contenedorId);
+    
+    if (incidencias.length === 0) {
+        contenedor.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3" style="opacity: 0.3;"></i>
+                <p class="text-muted">No hay incidencias ${tipo === 'activa' ? 'activas' : 'resueltas'}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    contenedor.innerHTML = '';
+    
+    incidencias.forEach(inc => {
+        const claseSeveridad = `incidencia-${inc.severidad}`;
+        
+        const card = document.createElement('div');
+        card.className = `card incidencia-card ${claseSeveridad} shadow-sm`;
+        
+        const badgeSeveridad = {
+            'critica': '<span class="badge bg-danger">CRÍTICA</span>',
+            'alta': '<span class="badge bg-warning text-dark">ALTA</span>',
+            'media': '<span class="badge bg-info text-white">MEDIA</span>',
+            'baja': '<span class="badge bg-success">BAJA</span>'
+        };
+        
+        const badgeTipo = {
+            'critica': '<span class="badge bg-dark">CRÍTICA</span>',
+            'mayor': '<span class="badge" style="background: #e67e22; color: white;">MAYOR</span>',
+            'menor': '<span class="badge bg-secondary">MENOR</span>'
+        };
+        
+        // ✅ CORRECCIÓN: Agregar botón solo para incidencias resueltas
+        const botonDetalle = tipo === 'resuelta' 
+            ? `<button class="btn btn-sm btn-success btn-ver-detalle" onclick="verDetalleResolucion(${inc.id}, event)">
+                   <i class="fas fa-search-plus me-1"></i>Ver Completo
+               </button>`
+            : '';
+        
+        card.innerHTML = `
+            ${botonDetalle}
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0 flex-grow-1" style="color: #2c3e50;">${inc.titulo}</h6>
+                    <div class="d-flex gap-2 ms-3">
+                        ${badgeSeveridad[inc.severidad] || ''}
+                        ${badgeTipo[inc.tipo] || ''}
+                    </div>
+                </div>
+                <p class="text-muted small mb-3" style="line-height: 1.6;">${inc.descripcion || 'Sin descripción'}</p>
+                <div class="d-flex flex-wrap gap-3 small">
+                    <span class="text-muted">
+                        <i class="fas fa-calendar me-1" style="color: #6c757d;"></i>${inc.fecha_incidencia}
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-users me-1" style="color: #6c757d;"></i>${inc.usuarios_afectados} usuarios
+                    </span>
+                    ${tipo === 'resuelta' ? `
+                        <span class="text-success fw-semibold">
+                            <i class="fas fa-check-circle me-1"></i>Resuelta: ${inc.fecha_resolucion}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        contenedor.appendChild(card);
+    });
+}
+
+// ========================================
+// VER DETALLE COMPLETO DE RESOLUCIÓN
+// ========================================
+function verDetalleResolucion(incidenciaId, event) {
+    // Prevenir que se cierre el modal principal
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    // Cargar datos de la incidencia
+    fetch(`/api/incidencia/${incidenciaId}/detalle-resolucion`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const inc = data.incidencia;
+                
+                // Llenar modal
+                document.getElementById('modalResolucionSubtitulo').textContent = inc.titulo;
+                document.getElementById('detalleItemCodigo').textContent = `${inc.item_codigo} - ${inc.item_nombre}`;
+                document.getElementById('detalleFechaIncidencia').textContent = inc.fecha_incidencia;
+                document.getElementById('detalleTitulo').textContent = inc.titulo;
+                document.getElementById('detalleFechaResolucion').textContent = inc.fecha_resolucion;
+                document.getElementById('detalleResuelto').textContent = inc.resuelto_por;
+                document.getElementById('detalleComentario').textContent = inc.comentario_resolucion;
+                
+                // Cargar imagen
+                const imgContainer = document.getElementById('detalleImagenContainer');
+                if (inc.imagen_resolucion) {
+                    imgContainer.innerHTML = `
+                        <img src="/static/${inc.imagen_resolucion}" 
+                             alt="Evidencia de resolución" 
+                             class="img-fluid rounded shadow-sm"
+                             style="max-height: 400px; cursor: pointer;"
+                             onclick="window.open('/static/${inc.imagen_resolucion}', '_blank')">
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="fas fa-info-circle me-1"></i>Haga clic en la imagen para verla en tamaño completo
+                        </p>
+                    `;
+                } else {
+                    imgContainer.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No hay imagen de resolución disponible
+                        </div>
+                    `;
+                }
+                
+                // Mostrar modal
+                const modal = new bootstrap.Modal(document.getElementById('modalDetalleResolucion'));
+                modal.show();
+            } else {
+                alert('❌ Error al cargar detalle de resolución');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error de conexión');
+        });
+}
+
+// ========================================
+// LIMPIAR FILTROS
+// ========================================
+function limpiarFiltros() {
+    document.getElementById('inputBuscar').value = '';
+    document.getElementById('filtroTipo').value = '';
+    document.getElementById('filtroCategoria').value = '';
+    document.getElementById('filtroSLA').value = '';
+    document.getElementById('filtroIncidencias').value = '';
+    document.getElementById('filtroOrden').value = 'codigo';
+    document.getElementById('resultadosBusqueda').style.display = 'none';
+    itemSeleccionado = null;
+    aplicarFiltros();
+}
+
+// ========================================
+// EXPORTAR PDF CON INCIDENCIAS COMPLETAS
+// ========================================
+async function exportarPDF() {
+    if (datosReporte.length === 0) {
+        alert('⚠️ No hay datos para exportar. Ajuste los filtros primero.');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    // COLORES INSTITUCIONALES
+    const COLOR_PRINCIPAL = [44, 62, 80];
+    const COLOR_DORADO = [212, 175, 55];
+    const COLOR_DORADO_CLARO = [244, 228, 188];
+    
+    // ENCABEZADO
+    doc.setFillColor(...COLOR_PRINCIPAL);
+    doc.rect(0, 0, 297, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('REPORTE DE INCIDENCIAS', 148.5, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const fecha = new Date().toLocaleDateString('es-PE', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    doc.text(`Distrito Fiscal de La Libertad - ${fecha}`, 148.5, 28, { align: 'center' });
+    
+    // RESUMEN
+    let yPos = 50;
+    doc.setFillColor(...COLOR_DORADO_CLARO);
+    doc.rect(10, yPos, 277, 25, 'F');
+    
+    doc.setTextColor(...COLOR_PRINCIPAL);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('RESUMEN GENERAL', 15, yPos + 8);
+    
+    const totalItems = datosReporte.length;
+    const totalActivas = datosReporte.reduce((sum, item) => sum + item.incidencias_activas, 0);
+    const totalResueltas = datosReporte.reduce((sum, item) => sum + item.incidencias_resueltas, 0);
+    const cumplimientoPromedio = datosReporte.length > 0 
+        ? Math.round(datosReporte.reduce((sum, item) => sum + item.cumplimiento_sla, 0) / datosReporte.length)
+        : 0;
+    
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.text(`Items: ${totalItems}`, 15, yPos + 15);
+    doc.text(`Incidencias Activas: ${totalActivas}`, 70, yPos + 15);
+    doc.text(`Incidencias Resueltas: ${totalResueltas}`, 140, yPos + 15);
+    doc.text(`Cumplimiento SLA: ${cumplimientoPromedio}%`, 220, yPos + 15);
+    
+    yPos += 35;
+    
+    // TABLA RESUMEN
+    const datosTabla = datosReporte.map(item => [
+        item.codigo,
+        item.nombre.substring(0, 40),
+        item.tipo.toUpperCase(),
+        item.semaforo_sla.toUpperCase(),
+        item.incidencias_activas.toString(),
+        item.incidencias_resueltas.toString(),
+        (item.incidencias_activas + item.incidencias_resueltas).toString()
+    ]);
+    
+    doc.autoTable({
+        startY: yPos,
+        head: [['CÓDIGO', 'NOMBRE', 'TIPO', 'SLA', 'ACTIVAS', 'RESUELTAS', 'TOTAL']],
+        body: datosTabla,
+        theme: 'grid',
+        headStyles: {
+            fillColor: COLOR_PRINCIPAL,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9,
+            halign: 'center'
+        },
+        bodyStyles: {
+            fontSize: 8,
+            cellPadding: 3
+        },
+        columnStyles: {
+            0: { cellWidth: 25, halign: 'center' },
+            1: { cellWidth: 80 },
+            2: { cellWidth: 30, halign: 'center' },
+            3: { cellWidth: 25, halign: 'center' },
+            4: { cellWidth: 25, halign: 'center' },
+            5: { cellWidth: 25, halign: 'center' },
+            6: { cellWidth: 25, halign: 'center' }
+        },
+        alternateRowStyles: {
+            fillColor: COLOR_DORADO_CLARO
+        }
+    });
+    
+    // ========================================
+    // DETALLE POR CADA ITEM (NUEVA PÁGINA)
+    // ========================================
+    for (const item of datosReporte) {
+        doc.addPage();
+        
+        // Encabezado del item
+        doc.setFillColor(...COLOR_PRINCIPAL);
+        doc.rect(0, 0, 297, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${item.codigo} - ${item.nombre}`, 148.5, 15, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Tipo: ${item.tipo.toUpperCase()} | SLA: ${item.semaforo_sla.toUpperCase()} | Cumplimiento: ${item.cumplimiento_sla}%`, 148.5, 25, { align: 'center' });
+        
+        // Cargar incidencias del item
+        try {
+            const response = await fetch(`/api/reportes/incidencias/${item.id}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                let yPosItem = 50;
+                
+                // INFORMACIÓN DEL ITEM
+                doc.setFillColor(...COLOR_DORADO_CLARO);
+                doc.rect(10, yPosItem, 277, 30, 'F');
+                
+                doc.setTextColor(...COLOR_PRINCIPAL);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'bold');
+                doc.text('INFORMACIÓN DEL ITEM', 15, yPosItem + 7);
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(8);
+                doc.text(`Categoría: ${item.categoria || 'Sin categoría'}`, 15, yPosItem + 14);
+                doc.text(`Total Incidencias: ${item.incidencias_activas + item.incidencias_resueltas}`, 15, yPosItem + 20);
+                doc.text(`Incidencias Activas: ${item.incidencias_activas}`, 100, yPosItem + 14);
+                doc.text(`Incidencias Resueltas: ${item.incidencias_resueltas}`, 100, yPosItem + 20);
+                doc.text(`Estado SLA: ${item.semaforo_sla.toUpperCase()}`, 200, yPosItem + 14);
+                doc.text(`Cumplimiento: ${item.cumplimiento_sla}%`, 200, yPosItem + 20);
+                
+                yPosItem += 40;
+                
+                // INCIDENCIAS ACTIVAS
+                if (data.activas.length > 0) {
+                    doc.setTextColor(...COLOR_PRINCIPAL);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`INCIDENCIAS ACTIVAS (${data.activas.length})`, 15, yPosItem);
+                    yPosItem += 8;
+                    
+                    const datosActivas = data.activas.map(inc => [
+                        inc.titulo.substring(0, 50),
+                        inc.tipo || '-',
+                        inc.severidad || '-',
+                        inc.fecha_incidencia,
+                        inc.usuarios_afectados.toString(),
+                        inc.descripcion ? inc.descripcion.substring(0, 60) : '-'
+                    ]);
+                    
+                    doc.autoTable({
+                        startY: yPosItem,
+                        head: [['TÍTULO', 'TIPO', 'SEVERIDAD', 'FECHA', 'USUARIOS', 'DESCRIPCIÓN']],
+                        body: datosActivas,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [220, 53, 69],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 8
+                        },
+                        bodyStyles: {
+                            fontSize: 7,
+                            cellPadding: 2
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 50 },
+                            1: { cellWidth: 25, halign: 'center' },
+                            2: { cellWidth: 25, halign: 'center' },
+                            3: { cellWidth: 35, halign: 'center' },
+                            4: { cellWidth: 20, halign: 'center' },
+                            5: { cellWidth: 65 }
+                        }
+                    });
+                    
+                    yPosItem = doc.lastAutoTable.finalY + 10;
+                }
+                
+                // INCIDENCIAS RESUELTAS (CON IMÁGENES)
+                if (data.resueltas.length > 0) {
+                    // Verificar si necesitamos nueva página
+                    if (yPosItem > 150) {
+                        doc.addPage();
+                        yPosItem = 20;
+                    }
+                    
+                    doc.setTextColor(...COLOR_PRINCIPAL);
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`INCIDENCIAS RESUELTAS (${data.resueltas.length})`, 15, yPosItem);
+                    yPosItem += 8;
+                    
+                    // Renderizar cada incidencia resuelta con su imagen
+                    for (const inc of data.resueltas) {
+                        // Verificar espacio en página
+                        if (yPosItem > 180) {
+                            doc.addPage();
+                            yPosItem = 20;
+                        }
+                        
+                        // Caja para incidencia
+                        doc.setDrawColor(40, 167, 69);
+                        doc.setLineWidth(0.5);
+                        doc.rect(10, yPosItem, 277, 50);
+                        
+                        // Información de la incidencia
+                        doc.setTextColor(...COLOR_PRINCIPAL);
+                        doc.setFontSize(9);
+                        doc.setFont(undefined, 'bold');
+                        doc.text(inc.titulo.substring(0, 60), 15, yPosItem + 7);
+                        
+                        doc.setFont(undefined, 'normal');
+                        doc.setFontSize(7);
+                        doc.text(`Tipo: ${inc.tipo || '-'}`, 15, yPosItem + 13);
+                        doc.text(`Severidad: ${inc.severidad || '-'}`, 60, yPosItem + 13);
+                        doc.text(`Usuarios Afectados: ${inc.usuarios_afectados}`, 110, yPosItem + 13);
+                        doc.text(`Fecha Incidencia: ${inc.fecha_incidencia}`, 15, yPosItem + 19);
+                        doc.text(`Fecha Resolución: ${inc.fecha_resolucion}`, 15, yPosItem + 25);
+                        
+                        // Descripción (truncada)
+                        if (inc.descripcion) {
+                            const descripcionCorta = inc.descripcion.substring(0, 100);
+                            doc.text(`Descripción: ${descripcionCorta}${inc.descripcion.length > 100 ? '...' : ''}`, 15, yPosItem + 31);
+                        }
+                        
+                        // Intentar cargar imagen de resolución
+                        try {
+                            const imgResponse = await fetch(`/api/incidencia/${inc.id}/detalle-resolucion`);
+                            const imgData = await imgResponse.json();
+                            
+                            if (imgData.success && imgData.incidencia.imagen_resolucion) {
+                                const imagenUrl = `/static/${imgData.incidencia.imagen_resolucion}`;
+                                
+                                // Cargar imagen como base64
+                                const imgBlob = await fetch(imagenUrl).then(r => r.blob());
+                                const reader = new FileReader();
+                                
+                                await new Promise((resolve) => {
+                                    reader.onloadend = function() {
+                                        try {
+                                            // Agregar imagen al PDF (esquina derecha)
+                                            doc.addImage(reader.result, 'JPEG', 230, yPosItem + 5, 50, 40);
+                                            
+                                            // Texto indicando imagen
+                                            doc.setFontSize(6);
+                                            doc.setTextColor(100, 100, 100);
+                                            doc.text('Imagen de resolución', 255, yPosItem + 48, { align: 'center' });
+                                        } catch (e) {
+                                            console.log('No se pudo agregar imagen:', e);
+                                        }
+                                        resolve();
+                                    };
+                                    reader.readAsDataURL(imgBlob);
+                                });
+                                
+                                // Comentario de resolución
+                                if (imgData.incidencia.comentario_resolucion) {
+                                    doc.setFontSize(7);
+                                    doc.setTextColor(...COLOR_PRINCIPAL);
+                                    doc.text(`Comentario: ${imgData.incidencia.comentario_resolucion.substring(0, 80)}`, 15, yPosItem + 37);
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Error cargando imagen:', e);
+                        }
+                        
+                        yPosItem += 55;
+                    }
+                }
+                
+                // Si no hay incidencias
+                if (data.activas.length === 0 && data.resueltas.length === 0) {
+                    doc.setTextColor(100, 100, 100);
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('No hay incidencias registradas para este item', 148.5, yPosItem + 20, { align: 'center' });
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando incidencias:', error);
+        }
+    }
+    
+    // PIE DE PÁGINA EN TODAS LAS PÁGINAS
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setTextColor(...COLOR_DORADO);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        doc.text(
+            `Documento generado automáticamente por INVENTECH - ${fecha}`,
+            148.5,
+            200,
+            { align: 'center' }
+        );
+        doc.text(`Página ${i} de ${pageCount}`, 148.5, 205, { align: 'center' });
+    }
+    
+    // GUARDAR PDF
+    const nombreArchivo = `Reporte_Incidencias_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(nombreArchivo);
+}
+
+// ========================================
+// MOSTRAR ERROR
+// ========================================
+function mostrarError(mensaje) {
+    document.getElementById('loadingReporte').style.display = 'none';
+    document.getElementById('sinResultados').style.display = 'none';
+    document.getElementById('tablaReporte').style.display = 'none';
+    alert('❌ ' + mensaje);
+}
+</script>
+
+{% endblock %}

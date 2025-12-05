@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Producto/Servicio{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- ENCABEZADO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Panel</a></li>
+                    <li class="breadcrumb-item active">Registrar Item</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: #2c3e50;">Registrar Producto/Servicio</h4>
+                    <p class="text-muted mb-0 small">Complete los campos requeridos (*)</p>
+                </div>
+                <a href="/dashboard" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- FORMULARIO -->
+    <form method="POST" action="/item/crear" id="formCrear" onsubmit="return validarFormulario()">
+        
+        <div class="row g-3">
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="col-lg-8">
+                
+                <!-- PASO 1: TIPO -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">1. Seleccionar Tipo</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="tipo" id="tipoProducto" value="producto" required>
+                                <label class="btn btn-outline-primary w-100 py-3 text-start" for="tipoProducto" onclick="actualizarTipo('producto')">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-box fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold">Producto</h6>
+                                            <small class="text-muted">Hardware tangible (equipos, cables)</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="tipo" id="tipoServicio" value="servicio" required>
+                                <label class="btn btn-outline-success w-100 py-3 text-start" for="tipoServicio" onclick="actualizarTipo('servicio')">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-server fa-2x me-3 text-success"></i>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold">Servicio</h6>
+                                            <small class="text-muted">Software o servicio intangible</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 2: INFORMACIÓN BÁSICA -->
+                <div class="card border shadow-sm mb-3" id="seccionBasica" style="display: none;">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">2. Información Básica</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- CÓDIGO AUTO-GENERADO -->
+                            <input type="hidden" name="codigo" id="codigoGenerado" value="">
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Código (Automático)</label>
+                                <input type="text" class="form-control form-control-sm bg-light" id="codigoPreview" readonly>
+                            </div>
+                            
+                            <!-- NOMBRE -->
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold small">
+                                    Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" name="nombre" id="nombre" required>
+                            </div>
+                            
+                            <!-- CATEGORÍA -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">
+                                    Categoría <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-sm" name="categoria" id="categoria" required>
+                                    <option value="">Seleccione</option>
+                                </select>
+                            </div>
+
+                            <!-- RESPONSABLE -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Responsable</label>
+                                <input type="text" class="form-control form-control-sm bg-light" value="{{ session.username }}" readonly>
+                                <input type="hidden" name="responsable" value="{{ session.username }}">
+                            </div>
+
+                            <!-- REEMPLAZO -->
+                            <div class="col-12">
+                                <div class="card bg-light border">
+                                    <div class="card-body p-3">
+                                        <h6 class="mb-3 small fw-bold">Reemplazo (Opcional)</h6>
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <label class="form-label small">Filtrar por tipo</label>
+                                                <select class="form-select form-select-sm" id="tipoReemplazo">
+                                                    <option value="">Todos</option>
+                                                    <option value="producto">Productos</option>
+                                                    <option value="servicio">Servicios</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-9">
+                                                <label class="form-label small">Buscar</label>
+                                                <input type="text" class="form-control form-control-sm" id="buscarReemplazo" placeholder="Código o nombre...">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Seleccionar item</label>
+                                                <select class="form-select form-select-sm" name="reemplaza_a_id" id="reemplazaSelect" size="4">
+                                                    <option value="">-- Sin reemplazo --</option>
+                                                </select>
+                                                <div id="contadorResultados" class="small text-muted mt-1"></div>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label class="form-label small">Motivo</label>
+                                                <textarea class="form-control form-control-sm" name="motivo_reemplazo" id="motivoReemplazo" rows="4" placeholder="Requerido si selecciona item"></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="previewReemplazo" class="alert alert-info mt-2 py-2" style="display: none;">
+                                            <small><strong>Seleccionado:</strong></small>
+                                            <div class="mt-1">
+                                                <span class="badge bg-primary me-1" style="color: white !important;" id="codigoAnterior"></span>
+                                                <small id="nombreAnterior"></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="limpiarReemplazo()">Limpiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- DEFINICIÓN -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">
+                                    Definición <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control form-control-sm" name="definicion" rows="2" required></textarea>
+                            </div>
+                            
+                            <!-- PROPÓSITO -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">
+                                    Propósito <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control form-control-sm" name="proposito" rows="2" required></textarea>
+                            </div>
+                            
+                            <!-- DEPENDENCIAS -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Dependencias</label>
+                                <textarea class="form-control form-control-sm" name="dependencias" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 3: COMPARATIVA -->
+                <div class="card border shadow-sm mb-3" id="seccionComparativa" style="display: none;">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">3. Análisis Comparativo</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-danger">
+                                    Estado Actual <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control form-control-sm" name="estado_actual" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-success">
+                                    Estado Objetivo <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control form-control-sm" name="estado_objetivo" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">
+                                    Beneficio Esperado <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control form-control-sm" name="beneficio" rows="2" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 4: CASO DE USO -->
+                <div class="card border shadow-sm" id="seccionCasoUso" style="display: none;">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">4. Caso de Uso</h6>
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label fw-semibold small">
+                            Descripción <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control form-control-sm" name="caso_uso" rows="3" required></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div class="col-lg-4">
+                
+                <!-- RESUMEN -->
+                <div class="card border shadow-sm mb-3 sticky-top" style="top: 80px;">
+                    <div class="card-header bg-white border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">Resumen</h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Tipo</small>
+                            <div id="resumenTipo">
+                                <span class="badge bg-secondary" style="color: white !important;">Sin seleccionar</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Código</small>
+                            <div id="resumenCodigo">
+                                <span class="badge bg-secondary" style="color: white !important;">Pendiente</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Responsable</small>
+                            <p class="mb-0 small fw-semibold">{{ session.username }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Estado</small>
+                            <span class="badge bg-warning text-dark">Propuesto</span>
+                        </div>
+
+                        <hr class="my-2">
+
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-2">Progreso</small>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" id="progresoFormulario" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block" id="textoProgreso">0% completado</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-sm w-100" id="btnCrear" disabled>
+                            <i class="fas fa-save me-1"></i>Registrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AYUDA -->
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-light border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">Campos Requeridos</h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <ul class="small mb-0 ps-3">
+                            <li>Tipo de item</li>
+                            <li>Nombre y categoría</li>
+                            <li>Definición y propósito</li>
+                            <li>Estados (actual/objetivo)</li>
+                            <li>Beneficio esperado</li>
+                            <li>Caso de uso</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+{% block extra_js %}
+<script>
+// CATEGORÍAS
+const CATEGORIAS = {
+    producto: ['Infraestructura de Red', 'Equipos de Red', 'Energía', 'Cableado Estructurado', 'Hardware', 'Almacenamiento', 'Otro'],
+    servicio: ['Conectividad', 'Comunicaciones', 'Tecnología Judicial', 'Seguridad', 'Infraestructura Cloud', 'Soporte', 'Otro']
+};
+
+let tipoSeleccionado = null;
+let itemsDisponibles = [];
+let itemsFiltrados = [];
+
+// ACTUALIZAR TIPO - BADGES VISIBLES CON !important
+function actualizarTipo(tipo) {
+    tipoSeleccionado = tipo;
+    
+    // Forzar texto blanco con style inline
+    if (tipo === 'producto') {
+        document.getElementById('resumenTipo').innerHTML = '<span class="badge bg-primary" style="color: white !important;">PRODUCTO</span>';
+    } else {
+        document.getElementById('resumenTipo').innerHTML = '<span class="badge bg-success" style="color: white !important;">SERVICIO</span>';
+    }
+    
+    document.getElementById('seccionBasica').style.display = 'block';
+    document.getElementById('seccionComparativa').style.display = 'block';
+    document.getElementById('seccionCasoUso').style.display = 'block';
+    
+    cargarCategorias(tipo);
+    generarCodigo(tipo);
+    actualizarProgreso();
+    
+    setTimeout(() => {
+        document.getElementById('seccionBasica').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+}
+
+// CARGAR CATEGORÍAS
+function cargarCategorias(tipo) {
+    const select = document.getElementById('categoria');
+    select.innerHTML = '<option value="">Seleccione</option>';
+    CATEGORIAS[tipo].forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+    });
+}
+
+// GENERAR CÓDIGO - BADGES VISIBLES CON !important
+async function generarCodigo(tipo) {
+    try {
+        const response = await fetch(`/api/siguiente-codigo?tipo=${tipo}`);
+        const data = await response.json();
+        const codigo = data.codigo;
+        
+        document.getElementById('codigoPreview').value = codigo;
+        document.getElementById('codigoGenerado').value = codigo;
+        
+        // Forzar texto blanco con style inline
+        if (tipo === 'producto') {
+            document.getElementById('resumenCodigo').innerHTML = `<span class="badge bg-primary" style="color: white !important;">${codigo}</span>`;
+        } else {
+            document.getElementById('resumenCodigo').innerHTML = `<span class="badge bg-success" style="color: white !important;">${codigo}</span>`;
+        }
+    } catch (error) {
+        console.error('Error al generar código:', error);
+    }
+}
+
+// CARGAR ITEMS DISPONIBLES
+async function cargarItemsDisponibles() {
+    try {
+        const response = await fetch('/api/items-activos');
+        const data = await response.json();
+        itemsDisponibles = data.items || [];
+        cargarItemsEnSelect(itemsDisponibles);
+    } catch (error) {
+        console.error('Error al cargar items:', error);
+    }
+}
+
+// FILTRAR POR TIPO
+document.getElementById('tipoReemplazo').addEventListener('change', function() {
+    const tipo = this.value;
+    const buscar = document.getElementById('buscarReemplazo').value.toLowerCase();
+    aplicarFiltros(tipo, buscar);
+});
+
+// BUSCAR
+document.getElementById('buscarReemplazo').addEventListener('input', function() {
+    const texto = this.value.toLowerCase().trim();
+    const tipo = document.getElementById('tipoReemplazo').value;
+    aplicarFiltros(tipo, texto);
+});
+
+// APLICAR FILTROS
+function aplicarFiltros(tipo, buscar) {
+    itemsFiltrados = itemsDisponibles.filter(item => {
+        if (tipo && item.tipo !== tipo) return false;
+        if (buscar) {
+            const match = item.codigo.toLowerCase().includes(buscar) ||
+                         item.nombre.toLowerCase().includes(buscar) ||
+                         (item.categoria && item.categoria.toLowerCase().includes(buscar));
+            if (!match) return false;
+        }
+        return true;
+    });
+    cargarItemsEnSelect(itemsFiltrados);
+}
+
+// CARGAR EN SELECT
+function cargarItemsEnSelect(items) {
+    const select = document.getElementById('reemplazaSelect');
+    const contador = document.getElementById('contadorResultados');
+    
+    select.innerHTML = '<option value="">-- Sin reemplazo --</option>';
+    
+    if (items.length === 0) {
+        contador.textContent = 'Sin resultados';
+        return;
+    }
+    
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.codigo} - ${item.nombre}`;
+        option.dataset.codigo = item.codigo;
+        option.dataset.nombre = item.nombre;
+        option.dataset.tipo = item.tipo;
+        option.dataset.categoria = item.categoria || '';
+        option.dataset.estado = item.estado;
+        select.appendChild(option);
+    });
+    
+    contador.textContent = `${items.length} disponible(s)`;
+}
+
+// SELECCIONAR ITEM
+document.getElementById('reemplazaSelect').addEventListener('change', function() {
+    const motivo = document.getElementById('motivoReemplazo');
+    const preview = document.getElementById('previewReemplazo');
+    
+    if (this.value) {
+        const option = this.options[this.selectedIndex];
+        document.getElementById('codigoAnterior').textContent = option.dataset.codigo;
+        document.getElementById('nombreAnterior').textContent = option.dataset.nombre;
+        
+        preview.style.display = 'block';
+        motivo.required = true;
+        
+        if (!motivo.value) {
+            motivo.value = `Reemplazo de ${option.dataset.codigo} por actualización`;
+        }
+    } else {
+        preview.style.display = 'none';
+        motivo.required = false;
+        motivo.value = '';
+    }
+    actualizarProgreso();
+});
+
+// LIMPIAR REEMPLAZO
+function limpiarReemplazo() {
+    document.getElementById('reemplazaSelect').value = '';
+    document.getElementById('motivoReemplazo').value = '';
+    document.getElementById('motivoReemplazo').required = false;
+    document.getElementById('previewReemplazo').style.display = 'none';
+    actualizarProgreso();
+}
+
+// PROGRESO
+function actualizarProgreso() {
+    const campos = document.querySelectorAll('[required]');
+    let completos = 0;
+    
+    campos.forEach(campo => {
+        if (campo.type === 'radio') {
+            if (document.querySelector(`input[name="${campo.name}"]:checked`)) completos++;
+        } else if (campo.value && campo.value.trim() !== '') {
+            completos++;
+        }
+    });
+    
+    const porcentaje = Math.round((completos / campos.length) * 100);
+    document.getElementById('progresoFormulario').style.width = porcentaje + '%';
+    document.getElementById('textoProgreso').textContent = porcentaje + '% completado';
+    document.getElementById('btnCrear').disabled = porcentaje < 100;
+}
+
+// VALIDAR FORMULARIO
+function validarFormulario() {
+    if (!tipoSeleccionado) {
+        alert('Seleccione el tipo de item');
+        return false;
+    }
+    
+    const nombre = document.getElementById('nombre').value.trim();
+    if (nombre.length < 5) {
+        alert('El nombre debe tener al menos 5 caracteres');
+        return false;
+    }
+    
+    const reemplazaId = document.getElementById('reemplazaSelect').value;
+    const motivo = document.getElementById('motivoReemplazo').value.trim();
+    
+    if (reemplazaId && !motivo) {
+        alert('Especifique el motivo del reemplazo');
+        return false;
+    }
+    
+    document.getElementById('btnCrear').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando...';
+    document.getElementById('btnCrear').disabled = true;
+    return true;
+}
+
+// INICIALIZAR
+document.addEventListener('DOMContentLoaded', function() {
+    cargarItemsDisponibles();
+    
+    const campos = document.querySelectorAll('input, textarea, select');
+    campos.forEach(campo => {
+        campo.addEventListener('input', actualizarProgreso);
+        campo.addEventListener('change', actualizarProgreso);
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Aprobaciones Pendientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- ENCABEZADO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="fas fa-tasks me-2 text-info"></i>Gestión de Aprobaciones
+                    </h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Aprobaciones</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <span class="badge bg-info fs-6">
+                        <i class="fas fa-user-tie me-1"></i>Gerente Administrativo
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Pendientes</p>
+                            <h3 class="fw-bold mb-0">{{ total_pendientes }}</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-3">
+                            <i class="fas fa-clock fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Aprobadas</p>
+                            <h3 class="fw-bold mb-0">{{ total_aprobadas }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Rechazadas</p>
+                            <h3 class="fw-bold mb-0">{{ total_rechazadas }}</h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-3">
+                            <i class="fas fa-times-circle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="/aprobaciones" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold">
+                        <i class="fas fa-filter me-1"></i>Estado
+                    </label>
+                    <select class="form-select" name="estado" onchange="this.form.submit()">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente" {% if estado_filtro == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                        <option value="aprobado" {% if estado_filtro == 'aprobado' %}selected{% endif %}>Aprobadas</option>
+                        <option value="rechazado" {% if estado_filtro == 'rechazado' %}selected{% endif %}>Rechazadas</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold">
+                        <i class="fas fa-tag me-1"></i>Tipo
+                    </label>
+                    <select class="form-select" name="tipo" onchange="this.form.submit()">
+                        <option value="">Todos los tipos</option>
+                        <option value="producto" {% if tipo_filtro == 'producto' %}selected{% endif %}>Productos</option>
+                        <option value="servicio" {% if tipo_filtro == 'servicio' %}selected{% endif %}>Servicios</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="/aprobaciones" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LISTA DE APROBACIONES -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-list me-2"></i>
+                Lista de Aprobaciones ({{ aprobaciones|length }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if aprobaciones %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4">Código</th>
+                            <th>Item</th>
+                            <th>Tipo</th>
+                            <th>Solicitado por</th>
+                            <th>Fecha Solicitud</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in aprobaciones %}
+                        <tr>
+                            <td class="px-4">
+                                <span class="badge {% if data.item.tipo == 'producto' %}bg-primary{% else %}bg-success{% endif %}">
+                                    {{ data.item.codigo }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ data.item.nombre }}</div>
+                                <small class="text-muted">{{ data.item.categoria }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ data.item.tipo|capitalize }}
+                                </span>
+                            </td>
+                            <td class="small">
+                                <i class="fas fa-user me-1"></i>
+                                {{ data.solicitante.username if data.solicitante else 'Usuario desconocido' }}
+                            </td>
+                            <td class="small text-muted">
+                                {{ data.aprobacion.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                            </td>
+                            <td>
+                                {% if data.aprobacion.estado == 'pendiente' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-clock me-1"></i>Pendiente
+                                </span>
+                                {% elif data.aprobacion.estado == 'aprobado' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Aprobado
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Rechazado
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a href="/aprobacion/{{ data.aprobacion.id }}" 
+                                       class="btn btn-sm btn-outline-info"
+                                       title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if data.aprobacion.estado == 'pendiente' %}
+                                    <a href="/aprobacion/{{ data.aprobacion.id }}" 
+                                       class="btn btn-sm btn-success"
+                                       title="Revisar">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-check fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay aprobaciones con los filtros seleccionados</h5>
+                {% if estado_filtro or tipo_filtro %}
+                <a href="/aprobaciones" class="btn btn-outline-primary mt-3">
+                    <i class="fas fa-times me-2"></i>Limpiar filtros
+                </a>
+                {% else %}
+                <p class="text-muted">Todas las solicitudes han sido procesadas</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

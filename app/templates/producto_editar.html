@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Panel</a></li>
+                    <li class="breadcrumb-item"><a href="/productos">Productos</a></li>
+                    <li class="breadcrumb-item"><a href="/producto/{{ producto.id }}">{{ producto.codigo }}</a></li>
+                    <li class="breadcrumb-item active">Editar</li>
+                </ol>
+            </nav>
+            
+            <h4 class="fw-bold mb-1" style="color: #2c3e50;">Editar Producto: {{ producto.codigo }}</h4>
+            <p class="text-muted mb-0 small">Modifique los campos necesarios</p>
+        </div>
+    </div>
+
+    <!-- MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div class="row g-3">
+            <div class="col-lg-8">
+                
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>Información Básica
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Código</label>
+                                <input type="text" class="form-control form-control-sm bg-light" value="{{ producto.codigo }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold small">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" name="nombre" value="{{ producto.nombre }}" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Categoría <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="categoria" required>
+                                    <option value="">Seleccione</option>
+                                    {% for cat in ['Infraestructura de Red', 'Equipos de Red', 'Energía', 'Cableado Estructurado', 'Hardware', 'Almacenamiento', 'Otro'] %}
+                                    <option value="{{ cat }}" {% if producto.categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Estado Operativo <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="estado_operativo" required>
+                                    <option value="activo" {% if producto.estado_operativo == 'activo' %}selected{% endif %}>Activo</option>
+                                    <option value="inactivo" {% if producto.estado_operativo == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                                </select>
+                                <small class="text-muted">Estado operacional del producto</small>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Responsable</label>
+                                <input type="text" class="form-control form-control-sm bg-light" value="{{ producto.responsable }}" readonly>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Definición <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" name="definicion" rows="2" required>{{ producto.definicion }}</textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Propósito <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" name="proposito" rows="2" required>{{ producto.proposito }}</textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Dependencias</label>
+                                <textarea class="form-control form-control-sm" name="dependencias" rows="2">{{ producto.dependencias or '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-exchange-alt me-2 text-info"></i>Análisis Comparativo
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-danger">Estado Actual <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" name="estado_actual" rows="3" required>{{ producto.estado_actual }}</textarea>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-success">Estado Objetivo <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" name="estado_objetivo" rows="3" required>{{ producto.estado_objetivo }}</textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Beneficio Esperado <span class="text-danger">*</span></label>
+                                <textarea class="form-control form-control-sm" name="beneficio" rows="2" required>{{ producto.beneficio }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-clipboard-list me-2 text-warning"></i>Caso de Uso
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label fw-semibold small">Descripción <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" name="caso_uso" rows="3" required>{{ producto.caso_uso }}</textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border shadow-sm mb-3 sticky-top" style="top: 80px;">
+                    <div class="card-header bg-white border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">
+                            <i class="fas fa-info-circle me-2 text-info"></i>Información
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Código:</small>
+                            <span class="badge bg-primary" style="color: white !important; font-size: 0.85rem;">{{ producto.codigo }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Estado Aprobación:</small>
+                            {% if producto.estado == 'activo' %}
+                            <span class="badge bg-success" style="color: white !important;">Activo</span>
+                            {% elif producto.estado == 'aprobado' %}
+                            <span class="badge bg-info" style="color: white !important;">Aprobado</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Propuesto</span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Estado Operativo:</small>
+                            {% if producto.estado_operativo == 'activo' %}
+                            <span class="badge bg-success" style="color: white !important;">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary" style="color: white !important;">Inactivo</span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Creado:</small>
+                            <p class="mb-0 small">{{ producto.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block mb-1">Responsable:</small>
+                            <p class="mb-0 small fw-semibold">{{ producto.responsable }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-warning bg-opacity-10 border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">
+                            <i class="fas fa-pencil-alt me-2 text-warning"></i>Razón del Cambio
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <label class="form-label small fw-semibold">¿Por qué se edita? <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" 
+                                  name="razon_cambio" 
+                                  rows="3" 
+                                  placeholder="Ej: Actualización de información"
+                                  required></textarea>
+                        <small class="text-muted d-block mt-2">Este comentario quedará registrado en el historial</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card border shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between">
+                            <a href="/producto/{{ producto.id }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-sm px-4">
+                                <i class="fas fa-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - INVENTECH</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --fiscal-blanco: #FFFFFF;
+            --fiscal-azul-oscuro: #2c3e50;
+            --fiscal-azul-medio: #34495e;
+            --fiscal-dorado: #D4AF37;
+            --fiscal-gris-claro: #F5F5F5;
+            --fiscal-gris-borde: #E0E0E0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--fiscal-azul-oscuro) 0%, var(--fiscal-azul-medio) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 520px;
+        }
+        
+        .login-card {
+            background: var(--fiscal-blanco);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Header compacto */
+        .login-header {
+            background: var(--fiscal-blanco);
+            padding: 2.5rem 2rem 1.5rem;
+            text-align: center;
+        }
+        
+        /* Logo con borde dorado */
+        .logo-container {
+            margin-bottom: 1.25rem;
+        }
+        
+        .logo-fiscal {
+            width: 130px;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        /* Texto del sistema */
+        .system-title {
+            color: var(--fiscal-azul-oscuro);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .system-subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Título principal */
+        .welcome-title {
+            color: var(--fiscal-azul-oscuro);
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .welcome-subtitle {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+        
+        /* Body del formulario */
+        .login-body {
+            padding: 0 2rem 2.5rem;
+        }
+        
+        /* Campos del formulario */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-label {
+            color: var(--fiscal-azul-oscuro);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-label i {
+            color: var(--fiscal-dorado);
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            border: 1px solid var(--fiscal-gris-borde);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: var(--fiscal-gris-claro);
+        }
+        
+        .form-control:focus {
+            border-color: var(--fiscal-dorado);
+            box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.15);
+            background-color: var(--fiscal-blanco);
+            outline: none;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-group .btn-toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--fiscal-dorado);
+            padding: 0.5rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group .btn-toggle-password:hover {
+            color: var(--fiscal-azul-oscuro);
+        }
+        
+        .input-group .form-control {
+            padding-right: 3rem;
+        }
+        
+        /* Checkbox */
+        .form-check {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-check-input {
+            border: 1px solid var(--fiscal-gris-borde);
+            border-radius: 4px;
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--fiscal-azul-oscuro);
+            border-color: var(--fiscal-azul-oscuro);
+        }
+        
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.15);
+        }
+        
+        .form-check-label {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-left: 0.3rem;
+        }
+        
+        /* Botón principal */
+        .btn-login {
+            background: linear-gradient(135deg, var(--fiscal-azul-oscuro) 0%, var(--fiscal-azul-medio) 100%);
+            color: var(--fiscal-blanco);
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.35);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .btn-login i {
+            font-size: 1.1rem;
+        }
+        
+        /* Alertas */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 1.25rem;
+            animation: slideDown 0.4s ease-out;
+            font-size: 0.9rem;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-danger {
+            background-color: #fee;
+            color: #c82333;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert .btn-close {
+            font-size: 0.75rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 576px) {
+            .login-header {
+                padding: 2rem 1.5rem 1.25rem;
+            }
+            
+            .logo-fiscal {
+                width: 110px;
+            }
+            
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+            
+            .login-body {
+                padding: 0 1.5rem 2rem;
+            }
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            margin-left: 0.5rem;
+        }
+        
+        .btn-login.loading .loading-spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='imagenes/logo.jpg') }}" 
+                         alt="Logo Fiscalía" 
+                         class="logo-fiscal">
+                </div>
+                
+                <h1 class="system-title">MINISTERIO PÚBLICO</h1>
+                <h2 class="system-title">FISCALÍA DE LA NACIÓN</h2>
+                <p class="system-subtitle">DISTRITO FISCAL DE LA LIBERTAD</p>
+                
+                <h3 class="welcome-title">Bienvenido a INVENTECH</h3>
+                <p class="welcome-subtitle">Sistema de Gestión de Portafolio TI</p>
+            </div>
+            
+            <!-- Body -->
+            <div class="login-body">
+                
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="/login" id="loginForm">
+                    
+                    <!-- Campo Usuario -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i>
+                            Usuario
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               name="username" 
+                               id="username"
+                               placeholder="Ingrese su usuario" 
+                               required 
+                               autofocus>
+                    </div>
+                    
+                    <!-- Campo Contraseña -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Contraseña
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   name="password" 
+                                   id="password"
+                                   placeholder="Ingrese su contraseña" 
+                                   required>
+                            <button type="button" 
+                                    class="btn-toggle-password" 
+                                    id="togglePassword"
+                                    aria-label="Mostrar contraseña">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recordar sesión -->
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="remember" 
+                               name="remember">
+                        <label class="form-check-label" for="remember">
+                            Recordar sesión
+                        </label>
+                    </div>
+                    
+                    <!-- Botón Ingresar -->
+                    <button type="submit" class="btn-login" id="btnLogin">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Ingresar
+                        <i class="fas fa-spinner loading-spinner"></i>
+                    </button>
+                    
+                </form>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            
+            eyeIcon.classList.toggle('fa-eye');
+            eyeIcon.classList.toggle('fa-eye-slash');
+        });
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Loading state on form submit
+        const loginForm = document.getElementById('loginForm');
+        const btnLogin = document.getElementById('btnLogin');
+        
+        loginForm.addEventListener('submit', function() {
+            btnLogin.classList.add('loading');
+            btnLogin.disabled = true;
+        });
+        
+        // Enter key en usuario pasa a contraseña
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('password').focus();
+            }
+        });
+    </script>
+</body>
+</html>

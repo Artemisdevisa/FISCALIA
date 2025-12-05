@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuario{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="fw-bold mb-2" style="font-size: 2rem;">
+                    Editar Usuario: {{ usuario.username }}
+                </h1>
+                <p class="mb-0" style="font-size: 1rem; opacity: 0.9;">
+                    Actualice la información del usuario en el sistema
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="{{ url_for('main.usuario_detalle', id=usuario.id) }}" class="btn btn-light px-4 py-2">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al Detalle
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FORMULARIO -->
+<section class="py-4" style="background-color: #f8f9fa;">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header border-bottom py-3" style="background-color: white;">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-user-edit me-2"></i>Información del Usuario
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('main.usuario_editar', id=usuario.id) }}" id="formEditar">
+                            
+                            <!-- DATOS DE ACCESO -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3" style="color: #2c3e50; font-size: 14px; text-transform: uppercase;">
+                                    <i class="fas fa-key me-2"></i>Datos de Acceso
+                                </h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Nombre de Usuario <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="username" 
+                                               id="username"
+                                               value="{{ usuario.username }}"
+                                               required
+                                               style="height: 45px; border: 2px solid #dee2e6;">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Rol <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" name="rol" id="rol" required style="height: 45px; border: 2px solid #dee2e6;">
+                                            <option value="tecnico" {% if usuario.rol == 'tecnico' %}selected{% endif %}>📋 Técnico</option>
+                                            <option value="jefe_ti" {% if usuario.rol == 'jefe_ti' %}selected{% endif %}>👔 Jefe de TI</option>
+                                            <option value="gerente" {% if usuario.rol == 'gerente' %}selected{% endif %}>🛡️ Gerente</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Nueva Contraseña
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="password" 
+                                                   class="form-control" 
+                                                   name="password" 
+                                                   id="password"
+                                                   placeholder="Dejar en blanco para mantener la actual"
+                                                   minlength="6"
+                                                   style="height: 45px; border: 2px solid #dee2e6;">
+                                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border: 2px solid #dee2e6;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block">Opcional - Solo si desea cambiar la contraseña (mínimo 6 caracteres)</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- DATOS PERSONALES -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3" style="color: #2c3e50; font-size: 14px; text-transform: uppercase;">
+                                    <i class="fas fa-user me-2"></i>Datos Personales
+                                </h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Nombres <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="nombres" 
+                                               id="nombres"
+                                               value="{{ persona.nombres if persona else '' }}"
+                                               required
+                                               style="height: 45px; border: 2px solid #dee2e6;">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Apellidos <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="apellidos" 
+                                               id="apellidos"
+                                               value="{{ persona.apellidos if persona else '' }}"
+                                               required
+                                               style="height: 45px; border: 2px solid #dee2e6;">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Teléfono
+                                        </label>
+                                        <input type="tel" 
+                                               class="form-control" 
+                                               name="telefono" 
+                                               id="telefono"
+                                               value="{{ persona.telefono if persona and persona.telefono else '' }}"
+                                               pattern="[0-9]{9,15}"
+                                               style="height: 45px; border: 2px solid #dee2e6;">
+                                        <small class="text-muted mt-1 d-block">Opcional - Solo números</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small" style="color: #2c3e50;">
+                                            Correo Electrónico
+                                        </label>
+                                        <input type="email" 
+                                               class="form-control" 
+                                               name="correo" 
+                                               id="correo"
+                                               value="{{ persona.correo if persona and persona.correo else '' }}"
+                                               style="height: 45px; border: 2px solid #dee2e6;">
+                                        <small class="text-muted mt-1 d-block">Opcional - Para notificaciones</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTONES -->
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <a href="{{ url_for('main.usuario_detalle', id=usuario.id) }}" class="btn btn-outline-secondary px-4 py-2">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn px-4 py-2" style="background: #2c3e50; color: white; border: none; font-weight: 500;">
+                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+</script>
+
+{% endblock %}

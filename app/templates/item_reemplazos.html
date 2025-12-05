@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Reemplazos{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="fw-bold mb-2" style="font-size: 2rem; line-height: 1.3;">
+                    Historial de Reemplazos
+                </h1>
+                <p class="mb-0" style="font-size: 1rem; opacity: 0.9; line-height: 1.6; max-width: 650px;">
+                    Visualiza la evolución completa de productos y servicios a través de su cadena de reemplazos y actualizaciones
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- FILTROS SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border: none;">
+                    <h6 class="mb-0 fw-bold text-white">
+                        <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <form id="formFiltros">
+                        <!-- TIPO -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">TIPO</label>
+                            <select class="form-select form-select-sm" id="filtroTipo">
+                                <option value="">Todos</option>
+                                <option value="producto">Productos</option>
+                                <option value="servicio">Servicios</option>
+                            </select>
+                        </div>
+
+                        <!-- CATEGORÍA -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">CATEGORÍA</label>
+                            <select class="form-select form-select-sm" id="filtroCategoria">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+
+                        <!-- ESTADO -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">ESTADO</label>
+                            <select class="form-select form-select-sm" id="filtroEstado">
+                                <option value="">Todos</option>
+                                <option value="aprobado">Aprobado</option>
+                                <option value="activo">Activo</option>
+                                <option value="propuesto">Propuesto</option>
+                            </select>
+                        </div>
+
+                        <!-- BÚSQUEDA -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">BUSCAR</label>
+                            <input type="text" class="form-control form-control-sm" id="filtroBuscar" 
+                                   placeholder="Código o nombre...">
+                        </div>
+
+                        <!-- MOSTRAR SOLO -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">OPCIONES</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="soloConReemplazos" checked>
+                                <label class="form-check-label small" for="soloConReemplazos">
+                                    Solo items con reemplazos
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="soloActuales">
+                                <label class="form-check-label small" for="soloActuales">
+                                    Solo versiones actuales
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-sm" style="background: #2c3e50; color: white; border: none; font-weight: 500;" onclick="aplicarFiltros()">
+                                <i class="fas fa-search me-1"></i>Buscar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarFiltros()">
+                                <i class="fas fa-redo me-1"></i>Limpiar
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-3">
+
+                    <!-- ESTADÍSTICAS -->
+                    <div>
+                        <h6 class="fw-bold mb-3 small" style="color: #2c3e50;">ESTADÍSTICAS</h6>
+                        <div class="mb-3 p-2 rounded" style="background-color: #f8f9fa;">
+                            <small class="text-muted d-block">Total Items</small>
+                            <p class="mb-0 fw-bold h5" style="color: #2c3e50;" id="statTotal">-</p>
+                        </div>
+                        <div class="mb-3 p-2 rounded" style="background-color: #fff3cd;">
+                            <small class="text-muted d-block">Con Reemplazos</small>
+                            <p class="mb-0 fw-bold h5 text-warning" id="statConReemplazos">-</p>
+                        </div>
+                        <div class="mb-0 p-2 rounded" style="background-color: #d1f2eb;">
+                            <small class="text-muted d-block">Cadenas Activas</small>
+                            <p class="mb-0 fw-bold h5 text-success" id="statCadenas">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTA DE ITEMS -->
+        <div class="col-lg-9">
+            <!-- INFORMACIÓN -->
+            <div class="alert border-0 mb-4" style="background-color: #e3f2fd;">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-info-circle fa-2x me-3" style="color: #1976d2;"></i>
+                    <div style="color: #0d47a1;">
+                        <strong>Información:</strong> Haga clic en cualquier tarjeta para visualizar el historial completo de reemplazos.
+                        Los items se organizan cronológicamente mostrando su evolución a través del tiempo.
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOADING -->
+            <div id="loading" class="text-center py-5">
+                <div class="spinner-border" style="color: #2c3e50;" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="text-muted mt-3 small">Cargando datos del historial...</p>
+            </div>
+
+            <!-- RESULTADOS -->
+            <div id="resultados" style="display: none;">
+                <!-- Los items se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETALLE DE CADENA DE REEMPLAZOS -->
+<div class="modal fade" id="modalCadena" tabindex="-1" aria-labelledby="modalCadenaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header py-3" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); border: none;">
+                <h5 class="modal-title fw-bold text-white" id="modalCadenaLabel">
+                    <i class="fas fa-sitemap me-2"></i>Cadena Completa de Reemplazos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="contenidoCadena">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #f8f9fa; border: none;">
+                <button type="button" class="btn btn-danger" id="btnDescargarPDF" onclick="descargarPDFHistorial()" style="font-weight: 500;">
+                    <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 500;">
+                    <i class="fas fa-times me-1"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+let todosLosItems = [];
+let itemsFiltrados = [];
+let itemIdActualModal = null;
+
+// ============================================
+// CARGAR DATOS AL INICIO
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    cargarItems();
+    cargarCategorias();
+});
+
+// ============================================
+// CARGAR ITEMS DESDE EL SERVIDOR
+// ============================================
+async function cargarItems() {
+    try {
+        const response = await fetch('/api/items-reemplazos');
+        const data = await response.json();
+        
+        if (data.success) {
+            todosLosItems = data.items;
+            itemsFiltrados = todosLosItems;
+            mostrarItems();
+            actualizarEstadisticas();
+        } else {
+            mostrarError('Error al cargar los datos');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error de conexión con el servidor');
+    }
+}
+
+// ============================================
+// CARGAR CATEGORÍAS DINÁMICAMENTE
+// ============================================
+function cargarCategorias() {
+    const categorias = [
+        'Infraestructura de Red',
+        'Equipos de Red',
+        'Energía',
+        'Cableado Estructurado',
+        'Hardware',
+        'Almacenamiento',
+        'Conectividad',
+        'Comunicaciones',
+        'Tecnología Judicial',
+        'Seguridad',
+        'Infraestructura Cloud',
+        'Soporte',
+        'Otro'
+    ];
+    
+    const select = document.getElementById('filtroCategoria');
+    categorias.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+    });
+}
+
+// ============================================
+// APLICAR FILTROS
+// ============================================
+function aplicarFiltros() {
+    const tipo = document.getElementById('filtroTipo').value;
+    const categoria = document.getElementById('filtroCategoria').value;
+    const estado = document.getElementById('filtroEstado').value;
+    const buscar = document.getElementById('filtroBuscar').value.toLowerCase().trim();
+    const soloConReemplazos = document.getElementById('soloConReemplazos').checked;
+    const soloActuales = document.getElementById('soloActuales').checked;
+    
+    itemsFiltrados = todosLosItems.filter(item => {
+        if (tipo && item.tipo !== tipo) return false;
+        if (categoria && item.categoria !== categoria) return false;
+        if (estado && item.estado !== estado) return false;
+        
+        if (buscar) {
+            const matchCodigo = item.codigo.toLowerCase().includes(buscar);
+            const matchNombre = item.nombre.toLowerCase().includes(buscar);
+            if (!matchCodigo && !matchNombre) return false;
+        }
+        
+        if (soloConReemplazos) {
+            if (!item.reemplaza_a_id && !item.tiene_reemplazo) return false;
+        }
+        
+        if (soloActuales) {
+            if (item.tiene_reemplazo) return false;
+        }
+        
+        return true;
+    });
+    
+    mostrarItems();
+    actualizarEstadisticas();
+}
+
+// ============================================
+// LIMPIAR FILTROS
+// ============================================
+function limpiarFiltros() {
+    document.getElementById('filtroTipo').value = '';
+    document.getElementById('filtroCategoria').value = '';
+    document.getElementById('filtroEstado').value = '';
+    document.getElementById('filtroBuscar').value = '';
+    document.getElementById('soloConReemplazos').checked = true;
+    document.getElementById('soloActuales').checked = false;
+    aplicarFiltros();
+}
+
+// ============================================
+// MOSTRAR ITEMS EN TARJETAS
+// ============================================
+function mostrarItems() {
+    const container = document.getElementById('resultados');
+    const loading = document.getElementById('loading');
+    
+    loading.style.display = 'none';
+    container.style.display = 'block';
+    
+    if (itemsFiltrados.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3 opacity-50"></i>
+                <h5 class="fw-bold mb-2" style="color: #2c3e50;">No se encontraron resultados</h5>
+                <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const productos = itemsFiltrados.filter(i => i.tipo === 'producto');
+    const servicios = itemsFiltrados.filter(i => i.tipo === 'servicio');
+    
+    let html = '';
+    
+    if (productos.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-box me-2 text-primary"></i>Productos (${productos.length})
+                </h5>
+                <div class="row g-3">
+        `;
+        productos.forEach(item => { html += generarTarjetaItem(item); });
+        html += `</div></div>`;
+    }
+    
+    if (servicios.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-server me-2 text-success"></i>Servicios (${servicios.length})
+                </h5>
+                <div class="row g-3">
+        `;
+        servicios.forEach(item => { html += generarTarjetaItem(item); });
+        html += `</div></div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+// ============================================
+// GENERAR TARJETA DE ITEM
+// ============================================
+function generarTarjetaItem(item) {
+    const colorBadge = item.tipo === 'producto' ? 'bg-primary' : 'bg-success';
+    const iconoTipo = item.tipo === 'producto' ? 'fa-box' : 'fa-server';
+    
+    let badgeEstado = '';
+    if (item.estado === 'aprobado') {
+        badgeEstado = '<span class="badge bg-info"><i class="fas fa-thumbs-up me-1"></i>Aprobado</span>';
+    } else if (item.estado === 'activo') {
+        badgeEstado = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Activo</span>';
+    } else {
+        badgeEstado = '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Propuesto</span>';
+    }
+    
+    let indicadores = '';
+    if (item.reemplaza_a_id) {
+        indicadores += '<span class="badge bg-warning text-dark me-1"><i class="fas fa-arrow-up me-1"></i>Reemplaza</span>';
+    }
+    if (item.tiene_reemplazo) {
+        indicadores += '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Reemplazado</span>';
+    }
+    
+    const totalCadena = (item.nivel_anterior || 0) + 1 + (item.nivel_posterior || 0);
+    let infoCadena = '';
+    if (totalCadena > 1) {
+        infoCadena = `
+            <div class="mt-2 pt-2 border-top">
+                <small class="text-muted">
+                    <i class="fas fa-sitemap me-1"></i>Cadena de ${totalCadena} versiones
+                </small>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 hover-shadow" style="cursor: pointer;" onclick="verCadena(${item.id})">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge ${colorBadge} px-3 py-2">
+                            <i class="fas ${iconoTipo} me-1"></i>${item.codigo}
+                        </span>
+                        ${badgeEstado}
+                    </div>
+                    <h6 class="fw-bold mb-2" style="color: #2c3e50;">${item.nombre}</h6>
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-tag me-1"></i>${item.categoria || 'Sin categoría'}
+                    </p>
+                    ${indicadores ? `<div class="mb-2">${indicadores}</div>` : ''}
+                    <p class="small text-muted mb-0">
+                        <i class="fas fa-calendar me-1"></i>${formatearFecha(item.fecha_creacion)}
+                    </p>
+                    ${infoCadena}
+                </div>
+                <div class="card-footer bg-light border-0">
+                    <button class="btn btn-sm btn-outline-primary w-100" onclick="event.stopPropagation(); verCadena(${item.id})">
+                        <i class="fas fa-eye me-1"></i>Ver Historial Completo
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// VER CADENA DE REEMPLAZOS
+// ============================================
+async function verCadena(itemId) {
+    try {
+        const response = await fetch(`/api/cadena-reemplazos/${itemId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            mostrarModalCadena(data.item_actual, data.cadena_anterior, data.cadena_posterior);
+        } else {
+            alert('❌ Error al cargar el historial');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error de conexión');
+    }
+}
+
+// ============================================
+// MOSTRAR MODAL CON CADENA COMPLETA
+// ============================================
+function mostrarModalCadena(itemActual, cadenaAnterior, cadenaPosterior) {
+    itemIdActualModal = itemActual.id;
+    const contenido = document.getElementById('contenidoCadena');
+    
+    let html = `
+        <div class="p-4">
+            <div class="text-center mb-4 pb-3 border-bottom">
+                <span class="badge ${itemActual.tipo === 'producto' ? 'bg-primary' : 'bg-success'} fs-5 mb-2 px-4 py-2">
+                    ${itemActual.codigo}
+                </span>
+                <h4 class="fw-bold mb-1" style="color: #2c3e50;">${itemActual.nombre}</h4>
+                <p class="text-muted mb-0">${itemActual.categoria}</p>
+            </div>
+            <div class="row"><div class="col-12">
+    `;
+    
+    if (cadenaAnterior.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3" style="color: #6c757d;">
+                    <i class="fas fa-history me-2"></i>Versiones Anteriores (${cadenaAnterior.length})
+                </h5>
+        `;
+        cadenaAnterior.reverse().forEach((item, index) => {
+            html += generarTarjetaCadena(item, index + 1, false);
+        });
+        html += `</div>`;
+    }
+    
+    html += `
+        <div class="mb-4">
+            <h5 class="fw-bold mb-3 text-primary">
+                <i class="fas fa-star me-2"></i>Versión Actual
+            </h5>
+            ${generarTarjetaCadena(itemActual, cadenaAnterior.length + 1, true)}
+        </div>
+    `;
+    
+    if (cadenaPosterior.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h5 class="fw-bold text-success mb-3">
+                    <i class="fas fa-arrow-right me-2"></i>Versiones Posteriores (${cadenaPosterior.length})
+                </h5>
+        `;
+        cadenaPosterior.forEach((item, index) => {
+            html += generarTarjetaCadena(item, cadenaAnterior.length + 2 + index, false);
+        });
+        html += `</div>`;
+    }
+    
+    const totalVersiones = cadenaAnterior.length + 1 + cadenaPosterior.length;
+    html += `
+            </div></div>
+            <div class="alert border-0 mb-0" style="background-color: #e3f2fd;">
+                <i class="fas fa-info-circle me-2" style="color: #1976d2;"></i>
+                <strong style="color: #0d47a1;">Resumen:</strong>
+                <span style="color: #0d47a1;">
+                    Esta cadena contiene <strong>${totalVersiones} versiones</strong> en total.
+                    ${cadenaAnterior.length > 0 ? `Reemplazó a ${cadenaAnterior.length} versión(es) anterior(es).` : ''}
+                    ${cadenaPosterior.length > 0 ? `Ha sido reemplazado por ${cadenaPosterior.length} versión(es) posterior(es).` : 'Es la versión más actual.'}
+                </span>
+            </div>
+        </div>
+    `;
+    
+    contenido.innerHTML = html;
+    const modal = new bootstrap.Modal(document.getElementById('modalCadena'));
+    modal.show();
+}
+
+// ============================================
+// GENERAR TARJETA PARA CADENA
+// ============================================
+function generarTarjetaCadena(item, numero, esActual) {
+    const borderClass = esActual ? 'border-primary border-3' : '';
+    const bgClass = esActual ? 'bg-light' : '';
+    
+    return `
+        <div class="card border ${borderClass} ${bgClass} mb-3 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center" 
+                             style="width: 50px; height: 50px; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
+                            <h5 class="mb-0 fw-bold">${numero}</h5>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge ${item.tipo === 'producto' ? 'bg-primary' : 'bg-success'} me-2">
+                                ${item.codigo}
+                            </span>
+                            ${esActual ? '<span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>ACTUAL</span>' : ''}
+                            ${item.estado === 'aprobado' ? '<span class="badge bg-info ms-2">Aprobado</span>' : ''}
+                        </div>
+                        <h6 class="fw-bold mb-2" style="color: #2c3e50;">${item.nombre}</h6>
+                        <div class="row g-2 small">
+                            <div class="col-md-4">
+                                <i class="fas fa-tag text-muted me-1"></i>
+                                <strong>Categoría:</strong> ${item.categoria || '-'}
+                            </div>
+                            <div class="col-md-4">
+                                <i class="fas fa-user text-muted me-1"></i>
+                                <strong>Responsable:</strong> ${item.responsable || '-'}
+                            </div>
+                            <div class="col-md-4">
+                                <i class="fas fa-calendar text-muted me-1"></i>
+                                <strong>Fecha:</strong> ${formatearFecha(item.fecha_creacion)}
+                            </div>
+                        </div>
+                        ${item.motivo_reemplazo ? `
+                            <div class="mt-2 pt-2 border-top">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Motivo:</strong> ${item.motivo_reemplazo}
+                                </small>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="col-auto">
+                        <a href="/${item.tipo}/${item.id}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver detalle">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// DESCARGAR PDF DEL HISTORIAL
+// ============================================
+async function descargarPDFHistorial() {
+    if (!itemIdActualModal) {
+        alert('❌ Error: No se ha seleccionado ningún item');
+        return;
+    }
+    
+    const btnPDF = document.getElementById('btnDescargarPDF');
+    const textoOriginal = btnPDF.innerHTML;
+    
+    try {
+        btnPDF.disabled = true;
+        btnPDF.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando PDF...';
+        
+        // Realizar fetch al endpoint
+        const response = await fetch(`/api/historial/${itemIdActualModal}/pdf`);
+        
+        // Verificar si la respuesta es exitosa
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        // Obtener el blob del PDF
+        const blob = await response.blob();
+        
+        // Crear URL temporal
+        const url = window.URL.createObjectURL(blob);
+        
+        // Crear link de descarga
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Obtener nombre del archivo del header o generar uno
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'historial_reemplazos.pdf';
+        
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (filenameMatch) {
+                filename = filenameMatch[1];
+            }
+        }
+        
+        link.download = filename;
+        link.style.display = 'none';
+        
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link);
+        link.click();
+        
+        // Limpiar
+        setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+        
+        // Mostrar notificación de éxito
+        mostrarNotificacion(
+            '✅ PDF generado exitosamente', 
+            `Archivo descargado: ${filename}`, 
+            'success'
+        );
+        
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        mostrarNotificacion(
+            '❌ Error al generar PDF', 
+            error.message || 'No se pudo generar el PDF del historial', 
+            'danger'
+        );
+    } finally {
+        btnPDF.disabled = false;
+        btnPDF.innerHTML = textoOriginal;
+    }
+}
+// ============================================
+// MOSTRAR NOTIFICACIÓN
+// ============================================
+function mostrarNotificacion(titulo, mensaje, tipo) {
+    const alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alerta.style.cssText = 'top: 20px; right: 20px; z-index: 99999; min-width: 350px; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.3);';
+    alerta.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} fa-2x me-3"></i>
+            <div class="flex-grow-1">
+                <strong>${titulo}</strong><br/><small>${mensaje}</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.body.appendChild(alerta);
+    setTimeout(() => { if (alerta.parentNode) alerta.remove(); }, 5000);
+}
+
+// ============================================
+// ACTUALIZAR ESTADÍSTICAS
+// ============================================
+function actualizarEstadisticas() {
+    const total = itemsFiltrados.length;
+    const conReemplazos = itemsFiltrados.filter(i => i.reemplaza_a_id || i.tiene_reemplazo).length;
+    const cadenasActivas = itemsFiltrados.filter(i => !i.tiene_reemplazo).length;
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statConReemplazos').textContent = conReemplazos;
+    document.getElementById('statCadenas').textContent = cadenasActivas;
+}
+
+// ============================================
+// FORMATEAR FECHA
+// ============================================
+function formatearFecha(fecha) {
+    if (!fecha) return '-';
+    const d = new Date(fecha);
+    return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// ============================================
+// MOSTRAR ERROR
+// ============================================
+function mostrarError(mensaje) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('resultados').style.display = 'block';
+    document.getElementById('resultados').innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>${mensaje}
+        </div>
+    `;
+}
+
+// Estilos hover
+const style = document.createElement('style');
+style.textContent = `.hover-shadow:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; transition: all 0.3s; }`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
+
+{% endblock %}

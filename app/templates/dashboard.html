@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- NOTIFICACIÓN FLOTANTE DE ALERTAS -->
+{% if alertas_lista %}
+<div id="alertaFlotante" class="position-fixed top-0 end-0 p-3" style="z-index: 9999; margin-top: 70px;">
+    <div class="alert alert-danger shadow-lg border-0 mb-0" role="alert" style="max-width: 400px;">
+        <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <h6 class="mb-0 fw-bold">Alertas Activas ({{ alertas_lista|length }})</h6>
+            <button type="button" class="btn-close ms-auto" onclick="cerrarAlerta()"></button>
+        </div>
+        <div style="max-height: 300px; overflow-y: auto;">
+            {% for alerta in alertas_lista[:3] %}
+            <div class="border-top pt-2 mt-2">
+                <small class="d-block mb-1 fw-semibold">{{ alerta.tipo.replace('_', ' ')|title }}</small>
+                <small class="d-block text-dark">{{ alerta.mensaje[:80] }}...</small>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="/alertas" class="btn btn-sm btn-outline-light w-100 mt-3">
+            Ver todas las alertas
+        </a>
+    </div>
+</div>
+
+<!-- BOTÓN FLOTANTE PERSISTENTE -->
+<div id="botonAlertaPersistente" class="position-fixed bottom-0 end-0 p-4" style="z-index: 9998; display: none;">
+    <a href="/alertas" class="btn btn-danger shadow-lg rounded-circle" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <i class="fas fa-exclamation-triangle fa-lg"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+            {{ alertas_lista|length }}
+        </span>
+    </a>
+</div>
+
+<style>
+@keyframes pulseButton {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
+        transform: scale(1.05);
+    }
+}
+
+#botonAlertaPersistente .btn-danger {
+    animation: pulseButton 2s infinite;
+}
+
+#botonAlertaPersistente:hover .btn-danger {
+    animation: none;
+    transform: scale(1.1);
+}
+</style>
+
+<script>
+function cerrarAlerta() {
+    document.getElementById('alertaFlotante').style.display = 'none';
+    document.getElementById('botonAlertaPersistente').style.display = 'block';
+}
+
+setTimeout(() => {
+    const alerta = document.getElementById('alertaFlotante');
+    if (alerta) alerta.style.opacity = '0.95';
+}, 30000);
+</script>
+{% endif %}
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container-fluid py-4">
+    
+    <!-- ENCABEZADO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="fw-bold mb-1" style="color: #2c3e50;">Panel de Control</h4>
+            <p class="text-muted mb-0 small">
+                Usuario: <strong>{{ session.username }}</strong> 
+                <span class="badge bg-secondary ms-2">{{ session.rol }}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- ESTADÍSTICAS MÁS SERIAS -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2 small fw-semibold">Productos Registrados</p>
+                    <h2 class="fw-bold mb-0" style="color: #2c3e50;">{{ total_productos }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2 small fw-semibold">Servicios Activos</p>
+                    <h2 class="fw-bold mb-0" style="color: #2c3e50;">{{ total_servicios }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2 small fw-semibold">Cumplimiento SLA</p>
+                    <h2 class="fw-bold mb-0" style="color: #2c3e50;">{{ cumplimiento_promedio }}%</h2>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar" role="progressbar" 
+                            style="width: {{ cumplimiento_promedio }}%; 
+                                    background-color: {% if cumplimiento_promedio >= 95 %}#28a745{% elif cumplimiento_promedio >= 90 %}#ffc107{% else %}#dc3545{% endif %};">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2 small fw-semibold">Items Operativos</p>
+                    <h2 class="fw-bold mb-0" style="color: #2c3e50;">{{ items_activos }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- COLUMNA PRINCIPAL -->
+        <div class="col-lg-8">
+            
+            <!-- CUMPLIMIENTO DE SLAs -->
+            <div class="card border shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-bold" style="color: #2c3e50;">Estado de Cumplimiento</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if metricas_recientes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="small fw-semibold" style="color: #2c3e50;">Producto/Servicio</th>
+                                    <th class="small text-center fw-semibold" style="color: #2c3e50;">Tipo</th>
+                                    <th class="small text-center fw-semibold" style="color: #2c3e50;">Período</th>
+                                    <th class="small text-center fw-semibold" style="color: #2c3e50;">Estado</th>
+                                    <th class="small text-center fw-semibold" style="color: #2c3e50;">Cumplimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for metrica in metricas_recientes %}
+                                <tr>
+                                    <td class="small">{{ metrica.nombre }}</td>
+                                    <td class="text-center">
+                                        {% if metrica.tipo == 'producto' %}
+                                        <span class="badge" style="min-width: 90px; font-size: 0.75rem; background-color: #17a2b8; color: white;">PRODUCTO</span>
+                                        {% elif metrica.tipo == 'servicio' %}
+                                        <span class="badge bg-success" style="min-width: 90px; font-size: 0.75rem;">SERVICIO</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary" style="min-width: 90px; font-size: 0.75rem;">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-muted text-center">{{ metrica.mes }}/{{ metrica.anio }}</td>
+                                    <td class="text-center">
+                                        {% if metrica.semaforo == 'verde' %}
+                                        <span class="badge bg-success" style="min-width: 80px; font-size: 0.75rem;">CUMPLE</span>
+                                        {% elif metrica.semaforo == 'amarillo' %}
+                                        <span class="badge bg-warning text-dark" style="min-width: 80px; font-size: 0.75rem;">ALERTA</span>
+                                        {% else %}
+                                        <span class="badge bg-danger" style="min-width: 80px; font-size: 0.75rem;">CRÍTICO</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small fw-semibold text-center">{{ metrica.porcentaje_cumplimiento }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 border-top bg-light">
+                        <a href="/metricas" class="text-decoration-none small fw-semibold">Ver historial completo →</a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3 opacity-50"></i>
+                        <p class="text-muted mb-0 small">No hay métricas registradas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMNA LATERAL -->
+        <div class="col-lg-4">
+            
+            <!-- APROBACIONES -->
+            {% if session.rol == 'gerente' %}
+            <div class="card border shadow-sm mb-3">
+                <div class="card-header bg-white border-bottom py-2">
+                    <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">Aprobaciones Pendientes</h6>
+                </div>
+                <div class="card-body py-3">
+                    {% if items_pendientes > 0 %}
+                    <div class="alert alert-info mb-2 py-2">
+                        <small class="d-block mb-1 fw-semibold">{{ items_pendientes }} solicitud(es) pendiente(s)</small>
+                        <small>Requieren revisión y aprobación</small>
+                    </div>
+                    <a href="/aprobaciones" class="btn btn-info btn-sm w-100">Ver solicitudes</a>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-clipboard-check fa-2x text-muted mb-2 opacity-50"></i>
+                        <p class="text-muted mb-0 small">Sin pendientes</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ACCIONES RÁPIDAS - Versión Compacta en Grid 2x3 -->
+            <div class="card border shadow-sm">
+                <div class="card-header bg-white border-bottom py-2">
+                    <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">Acciones Rápidas</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="row g-2">
+                        {% if session.rol in ['jefe_ti', 'gerente'] %}
+                        <div class="col-6">
+                            <a href="/item/crear" class="btn btn-outline-primary btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-plus mb-1"></i>
+                                <span>Registrar Item</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/metricas" class="btn btn-outline-success btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-chart-line mb-1"></i>
+                                <span>Métricas</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                        <div class="col-6">
+                            <a href="/productos" class="btn btn-outline-secondary btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-box mb-1"></i>
+                                <span>Productos</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/servicios" class="btn btn-outline-secondary btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-server mb-1"></i>
+                                <span>Servicios</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/reemplazos" class="btn btn-outline-secondary btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-history mb-1"></i>
+                                <span>Historial</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/reportes" class="btn btn-outline-secondary btn-sm w-100 d-flex flex-column align-items-center py-2" style="font-size: 0.75rem;">
+                                <i class="fas fa-file-pdf mb-1"></i>
+                                <span>Informes</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% block extra_js %}
+<script>
+function resolverAlerta(alertaId) {
+    if (confirm('¿Confirma que desea marcar esta alerta como resuelta?')) {
+        fetch(`/alerta/${alertaId}/resolver`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %}

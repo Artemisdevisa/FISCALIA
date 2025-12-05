@@ -1,0 +1,1331 @@
+{% extends "base.html" %}
+
+{% block title %}Incidencias{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="fw-bold mb-2" style="font-size: 2rem; line-height: 1.3;">
+                    Gestión de Incidencias
+                </h1>
+                <p class="mb-0" style="font-size: 1rem; opacity: 0.9; line-height: 1.6; max-width: 650px;">
+                    Registro y seguimiento de fallas en productos y servicios tecnológicos para el cálculo automático de métricas de cumplimiento
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <button class="btn btn-light" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalRegistrar"
+                        style="font-weight: 500;">
+                    <i class="fas fa-plus-circle me-2"></i>Registrar Incidencia
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MENSAJES -->
+<div class="container-fluid py-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- ESTADÍSTICAS -->
+<section class="py-4" style="background-color: white; border-bottom: 1px solid #e0e0e0;">
+    <div class="container-fluid">
+        <div class="row text-center g-3">
+            <div class="col-md-3 col-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <i class="fas fa-exclamation-circle fa-2x" style="color: #2c3e50;"></i>
+                        </div>
+                        <h3 class="fw-bold mb-1" style="color: #2c3e50;">{{ total_incidencias }}</h3>
+                        <p class="text-muted mb-0 small">Total de Incidencias</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <i class="fas fa-folder-open fa-2x text-danger"></i>
+                        </div>
+                        <h3 class="fw-bold mb-1 text-danger">{{ incidencias_abiertas }}</h3>
+                        <p class="text-muted mb-0 small">Abiertas</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <i class="fas fa-spinner fa-2x text-warning"></i>
+                        </div>
+                        <h3 class="fw-bold mb-1 text-warning">{{ incidencias_proceso }}</h3>
+                        <p class="text-muted mb-0 small">En Proceso</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                        <h3 class="fw-bold mb-1 text-success">{{ incidencias_resueltas }}</h3>
+                        <p class="text-muted mb-0 small">Resueltas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FILTROS -->
+<section class="py-4" style="background-color: white;">
+    <div class="container-fluid">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h6 class="fw-bold mb-1" style="color: #2c3e50;">
+                        <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                    </h6>
+                    <p class="text-muted mb-0 small">Refine los resultados según sus necesidades</p>
+                </div>
+                
+                <form method="GET" action="/incidencias" class="row g-3">
+                    <div class="col-lg-5 col-md-6">
+                        <label class="form-label small fw-semibold text-muted">ITEM</label>
+                        <select class="form-select" name="item_id">
+                            <option value="">Todos los items</option>
+                            {% for item in items %}
+                            <option value="{{ item.id }}" {% if item_id == item.id|string %}selected{% endif %}>
+                                {{ item.codigo }} - {{ item.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small fw-semibold text-muted">ESTADO</label>
+                        <select class="form-select" name="estado">
+                            <option value="">Todos los estados</option>
+                            <option value="abierta" {% if estado_filtro == 'abierta' %}selected{% endif %}>Abierta</option>
+                            <option value="en_proceso" {% if estado_filtro == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                            <option value="resuelta" {% if estado_filtro == 'resuelta' %}selected{% endif %}>Resuelta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-lg-4 col-md-12 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1" style="background: #2c3e50; border: none; font-weight: 500;">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="/incidencias" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TABLA -->
+<section class="py-4" style="background-color: #f8f9fa;">
+    <div class="container-fluid">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                {% if incidencias %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <tr>
+                                <th class="fw-semibold text-muted py-3 px-4">ID</th>
+                                <th class="fw-semibold text-muted py-3">ITEM</th>
+                                <th class="fw-semibold text-muted py-3">TÍTULO</th>
+                                <th class="fw-semibold text-muted py-3 text-center">TIPO</th>
+                                <th class="fw-semibold text-muted py-3 text-center">SEVERIDAD</th>
+                                <th class="fw-semibold text-muted py-3 text-center">ESTADO</th>
+                                <th class="fw-semibold text-muted py-3">FECHA</th>
+                                <th class="fw-semibold text-muted py-3 text-center">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incidencias %}
+                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                <td class="px-4 py-3">
+                                    <span class="fw-semibold" style="color: #2c3e50;">#{{ inc.id }}</span>
+                                </td>
+                                <td class="py-3">
+                                    <div>
+                                        <span class="fw-bold d-block" style="color: #2c3e50;">{{ inc.item.codigo }}</span>
+                                        <small class="text-muted">{{ inc.item.nombre[:30] }}{% if inc.item.nombre|length > 30 %}...{% endif %}</small>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <span class="small" style="color: #2c3e50;">{{ inc.titulo[:40] }}{% if inc.titulo|length > 40 %}...{% endif %}</span>
+                                </td>
+                                <td class="text-center py-3">
+                                    {% if inc.tipo == 'critica' %}
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>CRÍTICA
+                                    </span>
+                                    {% elif inc.tipo == 'mayor' %}
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="fas fa-exclamation-circle me-1"></i>MAYOR
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-info px-3 py-2">
+                                        <i class="fas fa-info-circle me-1"></i>MENOR
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-3">
+                                    {% if inc.severidad == 'alta' %}
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="fas fa-arrow-up me-1"></i>ALTA
+                                    </span>
+                                    {% elif inc.severidad == 'media' %}
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="fas fa-minus me-1"></i>MEDIA
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-success px-3 py-2">
+                                        <i class="fas fa-arrow-down me-1"></i>BAJA
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-3">
+                                    {% if inc.estado == 'abierta' %}
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="fas fa-folder-open me-1"></i>ABIERTA
+                                    </span>
+                                    {% elif inc.estado == 'en_proceso' %}
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="fas fa-cog me-1"></i>EN PROCESO
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-success px-3 py-2">
+                                        <i class="fas fa-check-circle me-1"></i>RESUELTA
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <small class="text-muted">{{ inc.fecha_incidencia.strftime('%d/%m/%Y') }}</small><br>
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ inc.fecha_incidencia.strftime('%H:%M') }}</small>
+                                </td>
+                                <td class="text-center py-3">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        {% if inc.estado != 'resuelta' %}
+                                        <button class="btn btn-sm btn-success" 
+                                                onclick="abrirModalResolver({{ inc.id }}, '{{ inc.titulo }}', '{{ inc.item.codigo }}', '{{ inc.item.nombre }}', '{{ inc.tipo }}', '{{ inc.severidad }}')"
+                                                title="Marcar como resuelta">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        
+                                        {% if session.rol in ['jefe_ti', 'gerente'] %}
+                                        <!-- ✅ BOTÓN DE CAMPANITA CON SONIDO -->
+                                        <button class="btn btn-sm btn-danger btn-campanita" 
+                                                onclick="generarAlertaManualConSonido({{ inc.id }}, '{{ inc.item.codigo }}', '{{ inc.item.nombre }}')"
+                                                title="🔔 Generar alerta crítica con sonido y notificación">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                onclick="verDetalleResolucion({{ inc.id }})"
+                                                title="Ver detalles de resolución">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-inbox fa-4x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: #2c3e50;">No hay incidencias registradas</h5>
+                    <p class="text-muted mb-3">Las incidencias registradas aparecerán aquí para su seguimiento</p>
+                    <button class="btn px-4 py-2" 
+                            style="background: #2c3e50; color: white; border: none; font-weight: 500;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalRegistrar">
+                        <i class="fas fa-plus-circle me-2"></i>Registrar Primera Incidencia
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: REGISTRAR INCIDENCIA -->
+<div class="modal fade" id="modalRegistrar" tabindex="-1" aria-labelledby="modalRegistrarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            
+            <div class="modal-header border-0 py-4" style="background: #2c3e50; color: white;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1" id="modalRegistrarLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Registrar Nueva Incidencia
+                    </h5>
+                    <p class="mb-0 small" style="opacity: 0.9;">
+                        Registro de fallas para el cálculo automático de métricas SLA
+                    </p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="POST" action="/incidencias/registrar" id="formRegistrarIncidencia">
+                <div class="modal-body p-4" style="background: #f8f9fa; max-height: 70vh; overflow-y: auto;">
+                    
+                    <div class="alert border-0 mb-4" style="background-color: #fff; border-left: 4px solid #2c3e50 !important;">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle me-3 mt-1" style="color: #2c3e50; font-size: 18px;"></i>
+                            <div>
+                                <p class="mb-1" style="color: #2c3e50; font-weight: 500; font-size: 14px;">
+                                    Importante
+                                </p>
+                                <p class="mb-0 text-muted small" style="line-height: 1.6;">
+                                    Las incidencias registradas se utilizan para calcular automáticamente las métricas mensuales 
+                                    de cumplimiento de SLA. Asegúrese de proporcionar información precisa.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-3" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-cube me-2"></i>Item Afectado
+                                    <span class="text-danger">*</span>
+                                </label>
+                                
+                                <input type="text" 
+                                       class="form-control mb-3" 
+                                       id="buscarItemIncidencia" 
+                                       placeholder="🔍 Escriba código, nombre o categoría para buscar..."
+                                       style="height: 50px; font-size: 15px; border: 2px solid #dee2e6;"
+                                       autocomplete="off">
+                                
+                                <div id="resultadosItemsIncidencia" style="max-height: 300px; overflow-y: auto; border: 2px solid #dee2e6; border-radius: 8px; background: white; display: none;"></div>
+                                
+                                <div id="itemSeleccionadoIncidencia" style="display: none;" class="mt-3 p-3 rounded" style="background: #e3f2fd; border: 2px solid #2196f3;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong style="color: #2c3e50;">Seleccionado:</strong> 
+                                            <span id="itemSeleccionadoTextoIncidencia" style="color: #1976d2;"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarSeleccionIncidencia()">
+                                            <i class="fas fa-times me-1"></i> Cambiar
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="item_id" id="itemIdHiddenIncidencia" value="" required>
+                                
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-search me-1"></i>
+                                    Escriba para filtrar: código, nombre o categoría
+                                </small>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-heading me-2"></i>Título
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="titulo" 
+                                       placeholder="Ej: Falla en el sistema de impresión" 
+                                       required
+                                       style="height: 50px; font-size: 15px; border: 2px solid #dee2e6;">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-align-left me-2"></i>Descripción
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" name="descripcion" rows="3" 
+                                          placeholder="Describa detalladamente la incidencia..." 
+                                          required
+                                          style="font-size: 15px; border: 2px solid #dee2e6;"></textarea>
+                            </div>
+
+                            <hr class="my-4">
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fas fa-flag me-2"></i>Tipo de Incidencia
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" name="tipo" required style="height: 50px; font-size: 15px;">
+                                        <option value="">Seleccione...</option>
+                                        <option value="critica">Crítica - Sistema no funcional</option>
+                                        <option value="mayor">Mayor - Funcionalidad limitada</option>
+                                        <option value="menor">Menor - Inconveniente leve</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fas fa-exclamation me-2"></i>Severidad
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" name="severidad" required style="height: 50px; font-size: 15px;">
+                                        <option value="">Seleccione...</option>
+                                        <option value="alta">Alta - Requiere atención inmediata</option>
+                                        <option value="media">Media - Atención en 24-48 horas</option>
+                                        <option value="baja">Baja - Puede esperar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-users me-2"></i>Usuarios Afectados
+                                </label>
+                                <input type="number" class="form-control" name="usuarios_afectados" 
+                                       min="0" 
+                                       placeholder="Número aproximado de usuarios afectados"
+                                       style="height: 50px; font-size: 15px; border: 2px solid #dee2e6;">
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Ingrese la cantidad aproximada de usuarios afectados por esta incidencia
+                                </small>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-3" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-network-wired me-2"></i>Servicios Afectados
+                                </label>
+                                
+                                <div class="border rounded p-3" style="background-color: white; max-height: 200px; overflow-y: auto; border: 2px solid #dee2e6 !important;">
+                                    <div class="row g-2">
+                                        {% for servicio in servicios_afectados %}
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       name="servicios_afectados" 
+                                                       value="{{ servicio.id }}" 
+                                                       id="servicio{{ servicio.id }}"
+                                                       style="cursor: pointer;">
+                                                <label class="form-check-label small" for="servicio{{ servicio.id }}" style="cursor: pointer;">
+                                                    <i class="fas fa-{{ servicio.icono }} me-1" style="color: #2c3e50;"></i>
+                                                    {{ servicio.nombre }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Seleccione todos los servicios que fueron afectados por esta incidencia
+                                </small>
+                            </div>
+
+                            <hr class="my-4">
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold mb-3" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-user-tie me-2"></i>Notificar a Técnico (Opcional)
+                                </label>
+                                
+                                <input type="text" 
+                                       class="form-control mb-3" 
+                                       id="buscarTecnico" 
+                                       placeholder="🔍 Buscar técnico por nombre o correo..."
+                                       style="height: 50px; font-size: 15px; border: 2px solid #dee2e6;"
+                                       autocomplete="off">
+                                
+                                <div id="resultadosTecnicos" style="max-height: 200px; overflow-y: auto; border: 2px solid #dee2e6; border-radius: 8px; background: white; display: none;"></div>
+                                
+                                <div id="tecnicoSeleccionado" style="display: none;" class="mt-3 p-3 rounded" style="background: #e3f2fd; border: 2px solid #2196f3;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong style="color: #2c3e50;">Técnico:</strong> 
+                                            <span id="tecnicoSeleccionadoTexto" style="color: #1976d2;"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarSeleccionTecnico()">
+                                            <i class="fas fa-times me-1"></i> Quitar
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="tecnico_id" id="tecnicoIdHidden" value="">
+                                
+                                <div class="form-check mt-3" style="display: none;" id="checkboxEnviarEmail">
+                                    <input class="form-check-input" type="checkbox" name="enviar_email" value="true" id="enviarEmailCheck" checked>
+                                    <label class="form-check-label small" for="enviarEmailCheck" style="color: #2c3e50;">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        Enviar notificación por correo electrónico
+                                    </label>
+                                </div>
+                                
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Opcional - Si selecciona un técnico, se le notificará por email sobre esta incidencia
+                                </small>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <div class="mt-3 p-3" style="background-color: #fffbf0; border-radius: 8px; border: 1px solid #ffeaa7;">
+                        <small class="text-muted d-flex align-items-start" style="line-height: 1.6;">
+                            <i class="fas fa-lightbulb me-2 mt-1" style="color: #f39c12;"></i>
+                            <span>
+                                <strong style="color: #2c3e50;">Recordatorio:</strong> 
+                                Las incidencias registradas impactan directamente en las métricas mensuales. 
+                                Cada incidencia es contabilizada para el cálculo del cumplimiento del SLA del item afectado.
+                            </span>
+                        </small>
+                    </div>
+                    
+                </div>
+                
+                <div class="modal-footer border-0" style="background: #fff; padding: 20px 24px;">
+                    <button type="button" class="btn btn-light px-4 py-2" data-bs-dismiss="modal" style="font-weight: 500; border: 2px solid #dee2e6;">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn px-4 py-2" style="background: #dc3545; color: white; border: none; font-weight: 500;">
+                        <i class="fas fa-save me-2"></i>Registrar Incidencia
+                    </button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RESOLVER INCIDENCIA -->
+<div class="modal fade" id="modalResolverGlobal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            
+            <div class="modal-header border-0 py-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1">
+                        <i class="fas fa-check-circle me-2"></i>Resolver Incidencia
+                    </h5>
+                    <p class="mb-0 small" style="opacity: 0.9;">
+                        Complete la información para marcar como resuelta
+                    </p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4" style="background: #f8f9fa;">
+                
+                <div class="alert border-0 mb-4" style="background-color: #e3f2fd; border-left: 4px solid #2196f3 !important;">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-user-check me-3 mt-1" style="color: #2196f3; font-size: 20px;"></i>
+                        <div>
+                            <p class="mb-1" style="color: #2c3e50; font-weight: 600; font-size: 14px;">
+                                Resolviendo como: <span id="nombreUsuarioActual" style="color: #1976d2;"></span>
+                            </p>
+                            <small style="color: #546e7a;">
+                                Esta acción quedará registrada en el sistema
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert border-0 mb-4" style="background-color: #fff3cd; border-left: 4px solid #ffc107 !important;">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle me-3 mt-1" style="color: #856404; font-size: 18px;"></i>
+                        <small style="line-height: 1.6; color: #856404;">
+                            Debe adjuntar una <strong>imagen como prueba</strong> de resolución y escribir un <strong>comentario detallado</strong> de las acciones realizadas.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-3">
+                        <div class="mb-3">
+                            <label class="small fw-semibold text-muted">INCIDENCIA</label>
+                            <p class="fw-semibold mb-1" style="color: #2c3e50;" id="modalTitulo"></p>
+                            <small class="text-muted" id="modalItem"></small>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Tipo</small>
+                                <span id="modalTipo" class="badge"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Severidad</small>
+                                <span id="modalSeveridad" class="badge"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fas fa-comment-dots me-2"></i>Comentario de Resolución
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" 
+                                      id="comentarioResolucion" 
+                                      rows="4" 
+                                      placeholder="Describa detalladamente las acciones realizadas para resolver la incidencia..."
+                                      style="font-size: 15px; border: 2px solid #dee2e6;"
+                                      required></textarea>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Mínimo 10 caracteres. Sea específico sobre la solución aplicada.
+                            </small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold mb-2" style="color: #2c3e50; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fas fa-camera me-2"></i>Imagen de Prueba
+                                <span class="text-danger">*</span>
+                            </label>
+                            
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="imagenPrueba" 
+                                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                                   style="height: 50px; font-size: 15px; border: 2px solid #dee2e6;"
+                                   required>
+                            
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-image me-1"></i>
+                                Formatos: PNG, JPG, JPEG, GIF, WEBP (Máx. 5MB)
+                            </small>
+                        </div>
+
+                        <div id="imagePreview" style="display: none;" class="mt-3 text-center p-3" style="background: white; border-radius: 8px;">
+                            <small class="text-muted d-block mb-2">Vista previa:</small>
+                            <img id="previewImg" src="" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 2px solid #dee2e6; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorMensaje" class="alert alert-danger mt-3 border-0" style="display: none; border-left: 4px solid #dc3545 !important;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorTexto"></span>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-0 py-3" style="background: #fff;">
+                <button type="button" class="btn btn-light px-4 py-2" data-bs-dismiss="modal" style="font-weight: 500; border: 2px solid #dee2e6;">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success px-4 py-2" onclick="confirmarResolucion()" style="font-weight: 500;">
+                    <i class="fas fa-check-circle me-1"></i>Marcar como Resuelta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: VER DETALLE RESOLUCIÓN -->
+<div class="modal fade" id="modalDetalleResolucion" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header border-0 py-4" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1">
+                        <i class="fas fa-file-alt me-2"></i>Detalles de Resolución
+                    </h5>
+                    <p class="mb-0 small" style="opacity: 0.9;">Información completa de la resolución</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background: #f8f9fa;">
+                <div id="detalleContenido">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                        <p class="text-muted mt-2">Cargando información...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 py-3" style="background: #fff;">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.item-resultado {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.item-resultado:hover {
+    background-color: #f8f9fa;
+}
+
+.item-resultado:last-child {
+    border-bottom: none;
+}
+
+.item-codigo {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 15px;
+    font-family: 'Courier New', monospace;
+}
+
+.item-nombre {
+    color: #495057;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.item-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.item-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-producto-custom {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge-servicio-custom {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-categoria-custom {
+    background-color: #f5f5f5;
+    color: #616161;
+}
+
+/* ✅ ESTILOS PARA BOTÓN CAMPANITA */
+.btn-campanita {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-campanita:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.5);
+}
+
+.btn-campanita:active {
+    transform: scale(0.95);
+}
+
+/* Animación de campanita */
+@keyframes ring {
+    0%, 100% { transform: rotate(-15deg); }
+    10% { transform: rotate(15deg); }
+    20% { transform: rotate(-15deg); }
+    30% { transform: rotate(15deg); }
+    40% { transform: rotate(-15deg); }
+    50% { transform: rotate(0deg); }
+}
+
+.btn-campanita:hover i {
+    animation: ring 1s ease-in-out;
+}
+</style>
+
+<script>
+// ========================================
+// VARIABLES GLOBALES
+// ========================================
+let incidenciaActualId = null;
+
+const nombreUsuarioActual = '{{ session.username }}';
+const rolUsuarioActual = '{{ session.rol }}';
+
+let nombreCompletoUsuario = nombreUsuarioActual;
+
+fetch('/api/usuario-actual-info')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            nombreCompletoUsuario = data.nombre_completo;
+        }
+    })
+    .catch(error => console.error('Error al cargar info usuario:', error));
+
+// ========================================
+// DATOS DE ITEMS
+// ========================================
+const todosLosItemsIncidencia = [
+    {% for item in items %}
+    {
+        id: {{ item.id }},
+        codigo: '{{ item.codigo }}',
+        nombre: '{{ item.nombre }}',
+        tipo: '{{ item.tipo }}',
+        categoria: '{{ item.categoria or '' }}'
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+// ========================================
+// CARGAR TÉCNICOS
+// ========================================
+let todosLosTecnicos = [];
+
+fetch('/api/tecnicos-activos')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            todosLosTecnicos = data.tecnicos;
+            console.log(`✅ ${todosLosTecnicos.length} técnicos cargados`);
+        }
+    })
+    .catch(error => console.error('Error al cargar técnicos:', error));
+
+// ========================================
+// BÚSQUEDA DE ITEMS
+// ========================================
+const inputBuscarInc = document.getElementById('buscarItemIncidencia');
+const contenedorResultadosInc = document.getElementById('resultadosItemsIncidencia');
+const itemSeleccionadoDivInc = document.getElementById('itemSeleccionadoIncidencia');
+const itemSeleccionadoTextoInc = document.getElementById('itemSeleccionadoTextoIncidencia');
+const itemIdHiddenInc = document.getElementById('itemIdHiddenIncidencia');
+
+inputBuscarInc.addEventListener('input', function() {
+    const termino = this.value.toLowerCase().trim();
+    
+    if (termino.length === 0) {
+        contenedorResultadosInc.style.display = 'none';
+        contenedorResultadosInc.innerHTML = '';
+        return;
+    }
+    
+    const resultados = todosLosItemsIncidencia.filter(item => {
+        return item.codigo.toLowerCase().includes(termino) ||
+               item.nombre.toLowerCase().includes(termino) ||
+               item.tipo.toLowerCase().includes(termino) ||
+               item.categoria.toLowerCase().includes(termino);
+    });
+    
+    mostrarResultadosIncidencia(resultados);
+});
+
+function mostrarResultadosIncidencia(resultados) {
+    if (resultados.length === 0) {
+        contenedorResultadosInc.innerHTML = '<div class="p-3 text-center text-muted">No se encontraron resultados</div>';
+        contenedorResultadosInc.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    resultados.forEach(item => {
+        const icono = item.tipo === 'producto' ? '📦' : '⚙️';
+        const badgeTipo = item.tipo === 'producto' 
+            ? '<span class="item-badge badge-producto-custom">Producto</span>'
+            : '<span class="item-badge badge-servicio-custom">Servicio</span>';
+        const badgeCategoria = item.categoria 
+            ? `<span class="item-badge badge-categoria-custom">${item.categoria}</span>`
+            : '';
+        
+        html += `
+            <div class="item-resultado" onclick="seleccionarItemIncidencia(${item.id}, '${item.codigo}', '${item.nombre}', '${item.tipo}')">
+                <div class="item-codigo">${icono} ${item.codigo}</div>
+                <div class="item-nombre">${item.nombre}</div>
+                <div class="item-badges">
+                    ${badgeTipo}
+                    ${badgeCategoria}
+                </div>
+            </div>
+        `;
+    });
+    
+    contenedorResultadosInc.innerHTML = html;
+    contenedorResultadosInc.style.display = 'block';
+}
+
+function seleccionarItemIncidencia(id, codigo, nombre, tipo) {
+    itemIdHiddenInc.value = id;
+    
+    const icono = tipo === 'producto' ? '📦' : '⚙️';
+    itemSeleccionadoTextoInc.textContent = `${icono} ${codigo} - ${nombre}`;
+    
+    itemSeleccionadoDivInc.style.display = 'block';
+    contenedorResultadosInc.style.display = 'none';
+    contenedorResultadosInc.innerHTML = '';
+    inputBuscarInc.value = '';
+}
+
+function limpiarSeleccionIncidencia() {
+    itemIdHiddenInc.value = '';
+    itemSeleccionadoDivInc.style.display = 'none';
+    inputBuscarInc.value = '';
+    inputBuscarInc.focus();
+}
+
+// ========================================
+// BÚSQUEDA DE TÉCNICOS
+// ========================================
+const inputBuscarTec = document.getElementById('buscarTecnico');
+const contenedorResultadosTec = document.getElementById('resultadosTecnicos');
+const tecnicoSeleccionadoDiv = document.getElementById('tecnicoSeleccionado');
+const tecnicoSeleccionadoTexto = document.getElementById('tecnicoSeleccionadoTexto');
+const tecnicoIdHidden = document.getElementById('tecnicoIdHidden');
+const checkboxEmailDiv = document.getElementById('checkboxEnviarEmail');
+
+inputBuscarTec.addEventListener('input', function() {
+    const termino = this.value.toLowerCase().trim();
+    
+    if (termino.length === 0) {
+        contenedorResultadosTec.style.display = 'none';
+        contenedorResultadosTec.innerHTML = '';
+        return;
+    }
+    
+    const resultados = todosLosTecnicos.filter(tec => {
+        return tec.nombres.toLowerCase().includes(termino) ||
+               tec.apellidos.toLowerCase().includes(termino) ||
+               tec.correo.toLowerCase().includes(termino);
+    });
+    
+    mostrarResultadosTecnicos(resultados);
+});
+
+function mostrarResultadosTecnicos(resultados) {
+    if (resultados.length === 0) {
+        contenedorResultadosTec.innerHTML = '<div class="p-3 text-center text-muted">No se encontraron técnicos</div>';
+        contenedorResultadosTec.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    resultados.forEach(tec => {
+        html += `
+            <div class="item-resultado" onclick="seleccionarTecnico(${tec.id}, '${tec.nombres}', '${tec.apellidos}', '${tec.correo}')">
+                <div class="item-codigo">👤 ${tec.nombres} ${tec.apellidos}</div>
+                <div class="item-nombre">📧 ${tec.correo}</div>
+            </div>
+        `;
+    });
+    
+    contenedorResultadosTec.innerHTML = html;
+    contenedorResultadosTec.style.display = 'block';
+}
+
+function seleccionarTecnico(id, nombres, apellidos, correo) {
+    tecnicoIdHidden.value = id;
+    tecnicoSeleccionadoTexto.textContent = `👤 ${nombres} ${apellidos} (${correo})`;
+    
+    tecnicoSeleccionadoDiv.style.display = 'block';
+    checkboxEmailDiv.style.display = 'block';
+    
+    contenedorResultadosTec.style.display = 'none';
+    contenedorResultadosTec.innerHTML = '';
+    inputBuscarTec.value = '';
+}
+
+function limpiarSeleccionTecnico() {
+    tecnicoIdHidden.value = '';
+    tecnicoSeleccionadoDiv.style.display = 'none';
+    checkboxEmailDiv.style.display = 'none';
+    inputBuscarTec.value = '';
+    inputBuscarTec.focus();
+}
+
+document.getElementById('modalRegistrar').addEventListener('hidden.bs.modal', function() {
+    limpiarSeleccionTecnico();
+    limpiarSeleccionIncidencia();
+    document.getElementById('formRegistrarIncidencia').reset();
+});
+
+// ========================================
+// ABRIR MODAL RESOLVER
+// ========================================
+function abrirModalResolver(id, titulo, codigo, nombre, tipo, severidad) {
+    incidenciaActualId = id;
+    
+    document.getElementById('nombreUsuarioActual').textContent = nombreCompletoUsuario || nombreUsuarioActual;
+    
+    document.getElementById('modalTitulo').textContent = titulo;
+    document.getElementById('modalItem').textContent = `${codigo} - ${nombre}`;
+    
+    const badgeTipo = document.getElementById('modalTipo');
+    badgeTipo.className = 'badge px-3 py-2';
+    if (tipo === 'critica') {
+        badgeTipo.className += ' bg-danger';
+        badgeTipo.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>CRÍTICA';
+    } else if (tipo === 'mayor') {
+        badgeTipo.className += ' bg-warning text-dark';
+        badgeTipo.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>MAYOR';
+    } else {
+        badgeTipo.className += ' bg-info';
+        badgeTipo.innerHTML = '<i class="fas fa-info-circle me-1"></i>MENOR';
+    }
+    
+    const badgeSeveridad = document.getElementById('modalSeveridad');
+    badgeSeveridad.className = 'badge px-3 py-2';
+    if (severidad === 'alta') {
+        badgeSeveridad.className += ' bg-danger';
+        badgeSeveridad.innerHTML = '<i class="fas fa-arrow-up me-1"></i>ALTA';
+    } else if (severidad === 'media') {
+        badgeSeveridad.className += ' bg-warning text-dark';
+        badgeSeveridad.innerHTML = '<i class="fas fa-minus me-1"></i>MEDIA';
+    } else {
+        badgeSeveridad.className += ' bg-success';
+        badgeSeveridad.innerHTML = '<i class="fas fa-arrow-down me-1"></i>BAJA';
+    }
+    
+    document.getElementById('comentarioResolucion').value = '';
+    document.getElementById('imagenPrueba').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('errorMensaje').style.display = 'none';
+    
+    new bootstrap.Modal(document.getElementById('modalResolverGlobal')).show();
+}
+
+// ========================================
+// PREVIEW DE IMAGEN
+// ========================================
+document.getElementById('imagenPrueba').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('⚠️ La imagen no debe superar los 5MB');
+            this.value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+});
+
+// ========================================
+// CONFIRMAR RESOLUCIÓN
+// ========================================
+function confirmarResolucion() {
+    const comentario = document.getElementById('comentarioResolucion').value.trim();
+    const input = document.getElementById('imagenPrueba');
+    const errorDiv = document.getElementById('errorMensaje');
+    const errorTexto = document.getElementById('errorTexto');
+    
+    if (!comentario || comentario.length < 10) {
+        errorTexto.textContent = 'Debe ingresar un comentario de al menos 10 caracteres';
+        errorDiv.style.display = 'block';
+        document.getElementById('comentarioResolucion').focus();
+        return;
+    }
+    
+    if (!input.files || input.files.length === 0) {
+        errorTexto.textContent = 'Debe seleccionar una imagen como prueba de resolución';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    const archivo = input.files[0];
+    
+    const tiposPermitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!tiposPermitidos.includes(archivo.type)) {
+        errorTexto.textContent = 'Formato no válido. Use: PNG, JPG, JPEG, GIF o WEBP';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    if (archivo.size > 5 * 1024 * 1024) {
+        errorTexto.textContent = 'La imagen no debe superar los 5MB';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('imagen_prueba', archivo);
+    formData.append('comentario_resolucion', comentario);
+    
+    const btn = event.target;
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+    
+    fetch(`/incidencias/${incidenciaActualId}/resolver`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ INCIDENCIA RESUELTA CORRECTAMENTE\n\nResuelta por: ${data.resuelto_por}\nLa imagen y el comentario fueron guardados como evidencia.`);
+            location.reload();
+        } else {
+            errorTexto.textContent = data.error || 'Error al resolver la incidencia';
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        errorTexto.textContent = 'Error de conexión. Intente nuevamente.';
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+    });
+}
+
+// ========================================
+// VER DETALLE DE RESOLUCIÓN
+// ========================================
+function verDetalleResolucion(incidenciaId) {
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalleResolucion'));
+    modal.show();
+    
+    fetch(`/api/incidencia/${incidenciaId}/detalle-resolucion`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarDetalleResolucion(data.incidencia);
+            } else {
+                document.getElementById('detalleContenido').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error al cargar la información
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('detalleContenido').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error de conexión
+                </div>
+            `;
+        });
+}
+
+function mostrarDetalleResolucion(inc) {
+    console.log('🔍 DEBUG - Objeto completo:', inc);
+    console.log('📸 Imagen recibida:', inc.imagen_resolucion);
+    console.log('📝 Tipo de dato:', typeof inc.imagen_resolucion);
+    
+    // ✅ VALIDACIÓN MEJORADA
+    const tieneImagen = inc.imagen_resolucion && 
+                       inc.imagen_resolucion !== null &&
+                       inc.imagen_resolucion !== 'null' && 
+                       inc.imagen_resolucion !== 'None' &&
+                       inc.imagen_resolucion.trim() !== '';
+    
+    console.log('✅ ¿Tiene imagen válida?', tieneImagen);
+    
+    const html = `
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-info-circle me-2"></i>Información de la Incidencia
+                </h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Item Afectado</small>
+                        <p class="fw-semibold mb-0">${inc.item_codigo} - ${inc.item_nombre}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Título</small>
+                        <p class="mb-0">${inc.titulo}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Fecha Incidencia</small>
+                        <p class="mb-0">${inc.fecha_incidencia}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Fecha Resolución</small>
+                        <p class="mb-0">${inc.fecha_resolucion}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-user-check me-2"></i>Resuelto Por
+                </h6>
+                <div class="d-flex align-items-center p-3" style="background: #e3f2fd; border-radius: 8px;">
+                    <i class="fas fa-user-circle fa-2x me-3" style="color: #1976d2;"></i>
+                    <div>
+                        <p class="fw-bold mb-0" style="color: #1976d2;">${inc.resuelto_por}</p>
+                        <small class="text-muted">Técnico responsable</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-comment-dots me-2"></i>Comentario de Resolución
+                </h6>
+                <p class="mb-0" style="line-height: 1.7; white-space: pre-wrap;">${inc.comentario_resolucion}</p>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-image me-2"></i>Imagen de Prueba
+                </h6>
+                ${tieneImagen ? `
+                    <div class="text-center">
+                        <img src="/static/${inc.imagen_resolucion}" 
+                             style="max-width: 100%; max-height: 400px; border-radius: 8px; border: 2px solid #dee2e6; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+                             alt="Imagen de resolución"
+                             onload="console.log('✅ Imagen cargada')"
+                             onerror="console.error('❌ Error al cargar:', this.src); this.style.border='3px solid red';">
+                    </div>
+                ` : `
+                    <div class="alert alert-warning mb-0 border-0" style="background-color: #fff3cd; border-left: 4px solid #ffc107 !important;">
+                        <i class="fas fa-exclamation-triangle me-2" style="color: #856404;"></i>
+                        <span style="color: #856404;">
+                            <strong>No hay imagen adjunta</strong><br>
+                            <small>Esta incidencia fue resuelta antes de implementar el sistema de imágenes obligatorias.</small>
+                        </span>
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('detalleContenido').innerHTML = html;
+}
+
+// ====================================
+// ✅ GENERAR ALERTA MANUAL CON SONIDO
+// ====================================
+function generarAlertaManualConSonido(incidenciaId, itemCodigo, itemNombre) {
+    if (!confirm(`⚠️ GENERAR ALERTA CRÍTICA MANUAL\n\n` +
+                 `Item: ${itemCodigo} - ${itemNombre}\n\n` +
+                 `Esto creará una alerta crítica inmediata que:\n` +
+                 `✅ Se reproducirá con sonido\n` +
+                 `✅ Enviará correos a técnicos y jefes TI\n` +
+                 `✅ Quedará registrada en el sistema\n\n` +
+                 `¿Desea continuar?`)) {
+        return;
+    }
+    
+    // ✅ 1. REPRODUCIR SONIDO INMEDIATAMENTE
+    if (window.reproducirSonidoCampanita) {
+        window.reproducirSonidoCampanita();
+        console.log('🔔 Sonido reproducido desde campanita de incidencia');
+    }
+    
+    // ✅ 2. GENERAR ALERTA EN BACKEND
+    fetch(`/incidencias/${incidenciaId}/alerta-critica`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // ✅ 3. MOSTRAR TOAST DE CONFIRMACIÓN
+            mostrarToastAlertaManual(itemCodigo, itemNombre);
+            
+            // ✅ 4. RECARGAR PÁGINA DESPUÉS DE 2 SEGUNDOS
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error de conexión al generar la alerta');
+    });
+}
+
+// ====================================
+// MOSTRAR TOAST DE CONFIRMACIÓN
+// ====================================
+function mostrarToastAlertaManual(codigo, nombre) {
+    // Crear toast dinámicamente
+    const toastHtml = `
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+            <div id="alertaToastManual" class="toast show" role="alert" style="min-width: 350px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); border: none; overflow: hidden;">
+                <div class="toast-header border-0" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 16px;">
+                    <i class="fas fa-bell me-2" style="animation: ring 1s ease-in-out; font-size: 20px;"></i>
+                    <strong class="me-auto">Alerta Crítica Generada</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body" style="padding: 16px; background: white;">
+                    <p class="mb-2"><strong style="color: #2c3e50;">${codigo}</strong> - ${nombre}</p>
+                    <div class="small text-muted" style="line-height: 1.8;">
+                        ✅ Sonido reproducido<br>
+                        ✅ Correos enviados<br>
+                        ✅ Alerta registrada
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Agregar al body
+    const toastContainer = document.createElement('div');
+    toastContainer.innerHTML = toastHtml;
+    document.body.appendChild(toastContainer);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        toastContainer.remove();
+    }, 5000);
+}
+</script>
+
+{% endblock %}

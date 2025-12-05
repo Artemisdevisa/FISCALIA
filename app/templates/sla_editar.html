@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}Editar SLA - {{ item.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- ENCABEZADO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="/{{ 'productos' if item.tipo == 'producto' else 'servicios' }}">
+                            {{ 'Productos' if item.tipo == 'producto' else 'Servicios' }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/{{ 'producto' if item.tipo == 'producto' else 'servicio' }}/{{ item.id }}">
+                            {{ item.codigo }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Editar SLA</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: #2c3e50;">
+                        {% if item.tipo == 'servicio' %}
+                        Editar Niveles de Servicio (SLA)
+                        {% else %}
+                        Editar Especificaciones Técnicas (SLA)
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted mb-0 small">{{ item.codigo }} - {{ item.nombre }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- FORMULARIO -->
+    <form method="POST" action="/sla/editar/{{ item.id }}" id="formSLA">
+        
+        <div class="row g-3">
+            <!-- COLUMNA PRINCIPAL -->
+            <div class="col-lg-8">
+                
+                {% if item.tipo == 'servicio' %}
+                <!-- ========== SLA PARA SERVICIOS ========== -->
+                
+                <!-- DISPONIBILIDAD Y RENDIMIENTO -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-chart-line me-2 text-success"></i>Disponibilidad y Rendimiento
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">
+                                    Disponibilidad (%) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="disponibilidad" 
+                                           value="{{ sla.disponibilidad if sla else '' }}"
+                                           min="0" 
+                                           max="100" 
+                                           step="0.1"
+                                           placeholder="99.5"
+                                           required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="text-muted">Disponibilidad mensual objetivo</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Velocidad Mínima</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="velocidad_min" 
+                                           value="{{ sla.velocidad_min if sla and sla.velocidad_min else '' }}"
+                                           min="0"
+                                           placeholder="100">
+                                    <span class="input-group-text">Mbps</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Latencia Máxima</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="latencia_max" 
+                                           value="{{ sla.latencia_max if sla and sla.latencia_max else '' }}"
+                                           min="0"
+                                           placeholder="10">
+                                    <span class="input-group-text">ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIEMPOS DE ATENCIÓN -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-clock me-2 text-primary"></i>Tiempos de Atención
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Tiempo de Respuesta</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="tiempo_respuesta" 
+                                           value="{{ sla.tiempo_respuesta if sla and sla.tiempo_respuesta else '' }}"
+                                           min="0"
+                                           placeholder="2">
+                                    <span class="input-group-text">horas</span>
+                                </div>
+                                <small class="text-muted">Tiempo para responder incidencias</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Tiempo de Resolución</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="tiempo_resolucion" 
+                                           value="{{ sla.tiempo_resolucion if sla and sla.tiempo_resolucion else '' }}"
+                                           min="0"
+                                           placeholder="4">
+                                    <span class="input-group-text">horas</span>
+                                </div>
+                                <small class="text-muted">Tiempo para resolver incidencias</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAPACIDAD Y HORARIO -->
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-users me-2 text-info"></i>Capacidad y Horario
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Capacidad de Usuarios</label>
+                                <input type="number" 
+                                       class="form-control form-control-sm" 
+                                       name="capacidad_usuarios" 
+                                       value="{{ sla.capacidad_usuarios if sla and sla.capacidad_usuarios else '' }}"
+                                       min="0"
+                                       placeholder="300">
+                                <small class="text-muted">Usuarios simultáneos soportados</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Horario de Servicio</label>
+                                <select class="form-select form-select-sm" name="horario">
+                                    <option value="24/7" {% if sla and sla.horario == '24/7' %}selected{% endif %}>24/7</option>
+                                    <option value="L-V 8am-6pm" {% if sla and sla.horario == 'L-V 8am-6pm' %}selected{% endif %}>Lunes-Viernes 8am-6pm</option>
+                                    <option value="L-S 8am-6pm" {% if sla and sla.horario == 'L-S 8am-6pm' %}selected{% endif %}>Lunes-Sábado 8am-6pm</option>
+                                    <option value="Personalizado" {% if sla and sla.horario not in ['24/7', 'L-V 8am-6pm', 'L-S 8am-6pm'] %}selected{% endif %}>Personalizado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- ========== ESPECIFICACIONES TÉCNICAS PARA PRODUCTOS ========== -->
+                
+                <!-- TOLERANCIA A FALLAS -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Tolerancia a Fallas
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-light border mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Define cuántas fallas se permiten al mes antes de marcar el producto como NO CUMPLE SLA
+                            </small>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">
+                                    Fallas Críticas Permitidas <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="fallas_criticas_permitidas" 
+                                           value="{{ sla.fallas_criticas_permitidas if sla and sla.fallas_criticas_permitidas is not none else '0' }}"
+                                           min="0"
+                                           max="10"
+                                           placeholder="0"
+                                           required>
+                                    <span class="input-group-text">por mes</span>
+                                </div>
+                                <small class="text-muted">Fallas que dejan el equipo inoperativo</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">
+                                    Fallas Menores Permitidas <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="fallas_menores_permitidas" 
+                                           value="{{ sla.fallas_menores_permitidas if sla and sla.fallas_menores_permitidas is not none else '2' }}"
+                                           min="0"
+                                           max="10"
+                                           placeholder="2"
+                                           required>
+                                    <span class="input-group-text">por mes</span>
+                                </div>
+                                <small class="text-muted">Fallas que causan lentitud o reinicios</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">
+                                    Disponibilidad Esperada
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="disponibilidad_esperada" 
+                                           value="{{ sla.disponibilidad_esperada if sla and sla.disponibilidad_esperada else '99.5' }}"
+                                           min="90"
+                                           max="100"
+                                           step="0.1"
+                                           placeholder="99.5">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="text-muted">Tiempo operativo mensual</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">
+                                    Tiempo Máximo de Inactividad
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="tiempo_max_inactividad" 
+                                           value="{{ sla.tiempo_max_inactividad if sla and sla.tiempo_max_inactividad else '3.6' }}"
+                                           min="0"
+                                           step="0.1"
+                                           placeholder="3.6">
+                                    <span class="input-group-text">horas/mes</span>
+                                </div>
+                                <small class="text-muted">Inactividad acumulada permitida</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIDA ÚTIL Y CARACTERÍSTICAS -->
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>Características Técnicas
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Vida Útil</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           name="vida_util" 
+                                           value="{{ sla.vida_util if sla and sla.vida_util else '' }}"
+                                           min="0"
+                                           placeholder="15">
+                                    <span class="input-group-text">años</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Mantenimiento Preventivo</label>
+                                <select class="form-select form-select-sm" name="mantenimiento_preventivo">
+                                    <option value="">No especificado</option>
+                                    <option value="Mensual" {% if sla and sla.mantenimiento_preventivo == 'Mensual' %}selected{% endif %}>Mensual</option>
+                                    <option value="Trimestral" {% if sla and sla.mantenimiento_preventivo == 'Trimestral' %}selected{% endif %}>Trimestral</option>
+                                    <option value="Semestral" {% if sla and sla.mantenimiento_preventivo == 'Semestral' %}selected{% endif %}>Semestral</option>
+                                    <option value="Anual" {% if sla and sla.mantenimiento_preventivo == 'Anual' %}selected{% endif %}>Anual</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Especificaciones Técnicas Adicionales</label>
+                                <textarea class="form-control form-control-sm" 
+                                          name="caracteristicas" 
+                                          rows="3" 
+                                          placeholder="Especificaciones técnicas detalladas: procesador, RAM, capacidad, puertos, materiales, dimensiones, etc.">{{ sla.caracteristicas if sla else '' }}</textarea>
+                                <small class="text-muted">Hardware, software, dimensiones, materiales, etc.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- COLUMNA DERECHA -->
+            <div class="col-lg-4">
+                
+                <!-- INFO DEL ITEM -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">
+                            <i class="fas fa-info-circle me-2 text-info"></i>Información del Item
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Código:</small>
+                            <span class="badge {% if item.tipo == 'producto' %}bg-primary{% else %}bg-success{% endif %}" style="color: white !important; font-size: 0.85rem;">
+                                {{ item.codigo }}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1">Nombre:</small>
+                            <p class="mb-0 small fw-semibold">{{ item.nombre }}</p>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block mb-1">Tipo:</small>
+                            <span class="badge bg-info" style="color: white !important;">{{ item.tipo|capitalize }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAZÓN DEL CAMBIO -->
+                <div class="card border shadow-sm mb-3">
+                    <div class="card-header bg-warning bg-opacity-10 border-bottom py-2">
+                        <h6 class="mb-0 fw-bold small" style="color: #2c3e50;">
+                            <i class="fas fa-pencil-alt me-2 text-warning"></i>Razón del Cambio
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <textarea class="form-control form-control-sm" 
+                                  name="razon_cambio" 
+                                  rows="3" 
+                                  placeholder="Describe por qué se actualiza el SLA..."
+                                  required></textarea>
+                        <small class="text-muted">Este comentario quedará registrado en el historial</small>
+                    </div>
+                </div>
+
+                <!-- AYUDA -->
+                <div class="card border shadow-sm">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0 fw-bold small">
+                            <i class="fas fa-question-circle me-2"></i>Ayuda
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        {% if item.tipo == 'servicio' %}
+                        <p class="small mb-2 fw-semibold">SLA para Servicios:</p>
+                        <ul class="small mb-0 ps-3">
+                            <li>Disponibilidad: % tiempo operativo</li>
+                            <li>Velocidad/Latencia: Rendimiento</li>
+                            <li>Tiempos: Respuesta y resolución</li>
+                            <li>Capacidad: Usuarios simultáneos</li>
+                        </ul>
+                        {% else %}
+                        <p class="small mb-2 fw-semibold">SLA para Productos:</p>
+                        <ul class="small mb-0 ps-3">
+                            <li><strong>Fallas críticas:</strong> Deja equipo inoperativo (ej: no enciende)</li>
+                            <li><strong>Fallas menores:</strong> Lentitud o reinicios</li>
+                            <li><strong>Disponibilidad 99.5%:</strong> Máximo 3.6 horas inactivo/mes</li>
+                            <li><strong>Vida útil:</strong> Duración esperada del producto</li>
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BOTONES DE ACCIÓN -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card border shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/{{ 'producto' if item.tipo == 'producto' else 'servicio' }}/{{ item.id }}" 
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-sm px-4">
+                                <i class="fas fa-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}

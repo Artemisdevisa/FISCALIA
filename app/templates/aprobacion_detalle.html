@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Aprobar {{ item.codigo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- ENCABEZADO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/aprobaciones">Aprobaciones</a></li>
+                    <li class="breadcrumb-item active">{{ item.codigo }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="badge {% if item.tipo == 'producto' %}bg-primary{% else %}bg-success{% endif %} fs-6">
+                            {{ item.codigo }}
+                        </span>
+                        {% if aprobacion.estado == 'pendiente' %}
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="fas fa-clock me-1"></i>Pendiente de Aprobación
+                        </span>
+                        {% elif aprobacion.estado == 'aprobado' %}
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle me-1"></i>Aprobado
+                        </span>
+                        {% else %}
+                        <span class="badge bg-danger fs-6">
+                            <i class="fas fa-times-circle me-1"></i>Rechazado
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h2 class="fw-bold mb-1">{{ item.nombre }}</h2>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-tag me-1"></i>{{ item.categoria }} • 
+                        <i class="fas fa-user me-1"></i>Solicitado por: <strong>{{ creador.username if creador else 'Usuario desconocido' }}</strong>
+                    </p>
+                </div>
+                
+                <div>
+                    <a href="/aprobaciones" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUMNA PRINCIPAL -->
+        <div class="col-lg-8">
+            
+            <!-- ALERTA DE ACCIÓN (Solo si está pendiente) -->
+            {% if aprobacion.estado == 'pendiente' %}
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div>
+                    <h5 class="mb-1">Revisión Requerida</h5>
+                    <p class="mb-0">Esta solicitud requiere tu aprobación como Gerente Administrativo. Revisa cuidadosamente la información antes de decidir.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- INFORMACIÓN GENERAL -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        Información del {{ 'Producto' if item.tipo == 'producto' else 'Servicio' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small text-muted fw-semibold">Definición</label>
+                            <p class="mb-0">{{ item.definicion }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted fw-semibold">Propósito</label>
+                            <p class="mb-0">{{ item.proposito }}</p>
+                        </div>
+                        <div class="col-12"><hr class="my-2"></div>
+                        <div class="col-md-6">
+                            <label class="small text-muted fw-semibold">Responsable</label>
+                            <p class="mb-0">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                {{ item.responsable }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted fw-semibold">Dependencias Técnicas</label>
+                            <p class="mb-0">{{ item.dependencias or 'Ninguna' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPARATIVA -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-exchange-alt me-2 text-success"></i>
+                        Análisis: Situación Actual vs Propuesta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="border-start border-danger border-4 ps-3">
+                                <label class="small text-danger fw-semibold mb-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Problema Actual
+                                </label>
+                                <p class="mb-0">{{ item.estado_actual }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-success border-4 ps-3">
+                                <label class="small text-success fw-semibold mb-2">
+                                    <i class="fas fa-check-circle me-1"></i>Solución Propuesta
+                                </label>
+                                <p class="mb-0">{{ item.estado_objetivo }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <label class="small text-info fw-semibold mb-2">
+                                    <i class="fas fa-lightbulb me-1"></i>Beneficio Esperado
+                                </label>
+                                <p class="mb-0">{{ item.beneficio }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CASO DE USO -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-clipboard-list me-2 text-info"></i>
+                        Caso de Uso
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ item.caso_uso }}</p>
+                </div>
+            </div>
+
+            <!-- SLA/ESPECIFICACIONES (Si existen) -->
+            {% if sla %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-certificate me-2 text-warning"></i>
+                        {% if item.tipo == 'servicio' %}Niveles de Servicio (SLA){% else %}Especificaciones Técnicas{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if item.tipo == 'servicio' %}
+                    <div class="row g-3">
+                        {% if sla.disponibilidad %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">Disponibilidad</label>
+                            <p class="mb-0 fs-4 fw-bold text-success">{{ sla.disponibilidad }}%</p>
+                        </div>
+                        {% endif %}
+                        {% if sla.tiempo_respuesta %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">Tiempo Respuesta</label>
+                            <p class="mb-0 fs-4 fw-bold text-primary">{{ sla.tiempo_respuesta }}h</p>
+                        </div>
+                        {% endif %}
+                        {% if sla.capacidad_usuarios %}
+                        <div class="col-md-4">
+                            <label class="small text-muted">Capacidad</label>
+                            <p class="mb-0 fs-4 fw-bold text-info">{{ sla.capacidad_usuarios }} usuarios</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="row g-3">
+                        {% if sla.norma_aplicable %}
+                        <div class="col-md-6">
+                            <label class="small text-muted">Norma Aplicable</label>
+                            <p class="mb-0">{{ sla.norma_aplicable }}</p>
+                        </div>
+                        {% endif %}
+                        {% if sla.vida_util %}
+                        <div class="col-md-6">
+                            <label class="small text-muted">Vida Útil</label>
+                            <p class="mb-0">{{ sla.vida_util }} años</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- DECISIÓN (Solo si está pendiente) -->
+            {% if aprobacion.estado == 'pendiente' %}
+            <div class="card border-0 shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-gavel me-2 text-warning"></i>
+                        Tomar Decisión
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Comentarios de la Decisión</label>
+                        <textarea class="form-control" 
+                                  id="comentariosDecision" 
+                                  rows="4" 
+                                  placeholder="Explica la razón de tu decisión (opcional)..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-3 justify-content-end">
+                        <button type="button" 
+                                class="btn btn-danger px-4" 
+                                onclick="decidirAprobacion('rechazar')">
+                            <i class="fas fa-times-circle me-2"></i>Rechazar
+                        </button>
+                        <button type="button" 
+                                class="btn btn-success px-4" 
+                                onclick="decidirAprobacion('aprobar')">
+                            <i class="fas fa-check-circle me-2"></i>Aprobar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- DECISIÓN TOMADA -->
+            <div class="card border-0 shadow-sm {% if aprobacion.estado == 'aprobado' %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-header {% if aprobacion.estado == 'aprobado' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 border-0 py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-{% if aprobacion.estado == 'aprobado' %}check{% else %}times{% endif %}-circle me-2"></i>
+                        Decisión: {{ aprobacion.estado|capitalize }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="small text-muted fw-semibold">Fecha de Decisión</label>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar me-2"></i>
+                            {{ aprobacion.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if aprobacion.fecha_respuesta }}
+                        </p>
+                    </div>
+                    {% if aprobacion.comentarios %}
+                    <div>
+                        <label class="small text-muted fw-semibold">Comentarios</label>
+                        <p class="mb-0">{{ aprobacion.comentarios }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- COLUMNA LATERAL -->
+        <div class="col-lg-4">
+            
+            <!-- INFORMACIÓN DE LA SOLICITUD -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-file-alt me-2"></i>Datos de la Solicitud
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="small text-muted">Solicitado por</label>
+                        <p class="mb-0 fw-semibold">
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            {{ creador.username if creador else 'Usuario desconocido' }}
+                        </p>
+                        <small class="text-muted">{{ creador.rol|capitalize if creador else '' }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Fecha de Solicitud</label>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar me-2"></i>
+                            {{ aprobacion.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Estado Actual</label>
+                        <p class="mb-0">
+                            {% if aprobacion.estado == 'pendiente' %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                            {% elif aprobacion.estado == 'aprobado' %}
+                            <span class="badge bg-success">Aprobado</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rechazado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="small text-muted">Tipo de Item</label>
+                        <p class="mb-0">
+                            <span class="badge {% if item.tipo == 'producto' %}bg-primary{% else %}bg-success{% endif %}">
+                                {{ item.tipo|capitalize }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORIAL DE VERSIONES -->
+            {% if versiones %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-history me-2"></i>Historial de Cambios
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for version in versiones %}
+                        <div class="list-group-item px-0 border-start border-primary border-3 ps-3 mb-2">
+                            <div class="small text-muted mb-1">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ version.fecha.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                            <div class="fw-semibold small">{{ version.campo_modificado }}</div>
+                            <small class="text-muted">v{{ version.numero_version }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ACCIONES RÁPIDAS -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-bolt me-2"></i>Acciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/{{ 'producto' if item.tipo == 'producto' else 'servicio' }}/{{ item.id }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-2"></i>Ver Item Completo
+                        </a>
+                        {% if item.creado_por %}
+                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                            <i class="fas fa-envelope me-2"></i>Contactar Solicitante
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% block extra_js %}
+<script>
+function decidirAprobacion(decision) {
+    const comentarios = document.getElementById('comentariosDecision').value;
+    
+    const mensaje = decision === 'aprobar' 
+        ? '¿Está seguro de APROBAR esta solicitud?' 
+        : '¿Está seguro de RECHAZAR esta solicitud?';
+    
+    if (!confirm(mensaje)) return;
+    
+    fetch('/aprobacion/{{ aprobacion.id }}/decidir', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            decision: decision,
+            comentarios: comentarios
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(decision === 'aprobar' ? 'Solicitud aprobada exitosamente' : 'Solicitud rechazada');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la decisión');
+        console.error(error);
+    });
+}
+</script>
+{% endblock %}
+
+{% endblock %}

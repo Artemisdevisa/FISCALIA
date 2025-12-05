@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}INVENTECH{% endblock %} - Fiscalía La Libertad</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='imagenes/logo.jpg') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Colores institucionales */
+            --fiscal-blanco: #FFFFFF;
+            --fiscal-azul-oscuro: #2c3e50;
+            --fiscal-azul-medio: #34495e;
+            --fiscal-azul-claro: #4a6fa5;
+            --fiscal-dorado: #D4AF37;
+            --fiscal-dorado-claro: #E8C547;
+            --fiscal-gris-claro: #F5F5F5;
+            --fiscal-gris-medio: #E9ECEF;
+        }
+        
+        body {
+            background-color: var(--fiscal-gris-claro);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Navbar más sobrio */
+        .navbar-principal {
+            background: var(--fiscal-azul-oscuro);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+        }
+        
+        .navbar-brand {
+            font-size: 1rem;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .navbar-brand:hover {
+            opacity: 0.9;
+        }
+        
+        /* Logo institucional */
+        .navbar-logo {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            background: var(--fiscal-blanco);
+            border-radius: 50%;
+            padding: 4px;
+            border: 2px solid var(--fiscal-dorado);
+        }
+        
+        .navbar-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar-brand-text .fw-bold {
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Enlaces del menú más discretos */
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 400;
+            font-size: 0.95rem;
+            padding: 0.4rem 0.9rem !important;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--fiscal-blanco) !important;
+        }
+        
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        /* Dropdowns más formales */
+        .dropdown-menu {
+            border: 1px solid var(--fiscal-gris-medio);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            padding: 0.5rem 0;
+        }
+        
+        .dropdown-item {
+            padding: 0.5rem 1.25rem;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--fiscal-gris-claro);
+            color: var(--fiscal-azul-oscuro);
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            color: var(--fiscal-azul-medio);
+            font-size: 0.85rem;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            opacity: 0.3;
+        }
+        
+        /* Badge del usuario más discreto */
+        .badge {
+            background-color: var(--fiscal-gris-medio) !important;
+            color: var(--fiscal-azul-oscuro) !important;
+            font-weight: 500;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* ✅ NUEVO: Badge animado de alertas */
+        .pulse-badge {
+            animation: pulse-badge 2s infinite;
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+
+        @keyframes pulse-badge {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+        
+        /* Main content */
+        main {
+            flex: 1;
+        }
+        
+        /* Botones institucionales */
+        .btn-fiscal {
+            background: var(--fiscal-azul-oscuro);
+            color: var(--fiscal-blanco);
+            border: none;
+            font-weight: 500;
+            padding: 0.5rem 1.25rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .btn-fiscal:hover {
+            background: var(--fiscal-azul-medio);
+            color: var(--fiscal-blanco);
+        }
+        
+        /* Cards */
+        .card {
+            border: 1px solid var(--fiscal-gris-medio);
+            border-radius: 8px;
+            transition: box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid var(--fiscal-gris-medio);
+            background-color: var(--fiscal-blanco);
+        }
+        
+        /* Footer sobrio */
+        footer {
+            background: var(--fiscal-azul-oscuro);
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: auto;
+        }
+        
+        footer a {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        footer a:hover {
+            color: var(--fiscal-blanco);
+        }
+        
+        footer h5 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--fiscal-blanco);
+        }
+        
+        footer h5 i {
+            color: var(--fiscal-dorado);
+            font-size: 0.9rem;
+        }
+        
+        footer .small {
+            line-height: 1.8;
+            font-size: 0.85rem;
+        }
+        
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--fiscal-azul-oscuro);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: var(--fiscal-dorado);
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--fiscal-azul-medio);
+        }
+        
+        /* Badges de estado */
+        .badge.bg-primary {
+            background: var(--fiscal-azul-oscuro) !important;
+        }
+        
+        .badge.bg-warning {
+            background: var(--fiscal-dorado) !important;
+            color: var(--fiscal-azul-oscuro) !important;
+        }
+        
+        /* Alertas */
+        .alert-success {
+            background-color: #d4edda;
+            border-left: 3px solid #28a745;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-left: 3px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 3px solid var(--fiscal-dorado);
+            color: #856404;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border-left: 3px solid var(--fiscal-azul-claro);
+            color: #0c5460;
+        }
+        
+        /* Tablas profesionales */
+        .table thead {
+            background: var(--fiscal-azul-oscuro);
+            color: var(--fiscal-blanco);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        /* Forms */
+        .form-label {
+            color: var(--fiscal-azul-oscuro);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--fiscal-azul-medio);
+            box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.1);
+        }
+        
+        /* ✅ NUEVO: Estilos para notificaciones toast */
+        #alertaToast {
+            min-width: 350px;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #alertaToast .toast-header {
+            border-bottom: none;
+            padding: 15px 20px;
+        }
+
+        #alertaToast .toast-body {
+            padding: 20px;
+        }
+
+        #alertaToast .btn-sm {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        /* Animación de entrada */
+        #alertaToast.showing {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Animación de icono pulsante */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        #alertaToast .toast-header i {
+            animation: pulse 1s infinite;
+        }
+        
+        /* Responsive */
+        @media (max-width: 991px) {
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            
+            .nav-link {
+                margin: 0.25rem 0;
+            }
+            
+            .navbar-logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .navbar-brand-text .fw-bold {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-principal navbar-expand-lg navbar-dark">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/">
+                <img src="{{ url_for('static', filename='imagenes/logo.jpg') }}" 
+                     alt="Logo Fiscalía" 
+                     class="navbar-logo">
+                
+                <div class="navbar-brand-text">
+                    <div class="fw-bold">INVENTECH</div>
+                    <small style="font-size: 0.65rem; opacity: 0.8;">Gestión de Portafolio TI</small>
+                </div>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-th-large me-1"></i>Panel
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/incidencias">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Incidencias
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="catalogoDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-folder-open me-1"></i>Catálogo
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/productos"><i class="fas fa-box"></i>Productos</a></li>
+                            <li><a class="dropdown-item" href="/servicios"><i class="fas fa-server"></i>Servicios</a></li>
+                            {% if session.rol in ['jefe_ti', 'gerente'] %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/item/crear"><i class="fas fa-plus"></i>Registrar Item</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tasks me-1"></i>Gestión
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/metricas"><i class="fas fa-chart-bar"></i>Métricas</a></li>
+                            <li>
+                                <!-- ✅ AGREGADO: onclick para reproducir sonido -->
+                                <a class="dropdown-item" href="/alertas" onclick="if(window.reproducirSonidoCampanita) window.reproducirSonidoCampanita();">
+                                    <i class="fas fa-bell"></i>Alertas
+                                    {% if alertas_activas > 0 %}
+                                    <span class="badge bg-danger ms-1 pulse-badge">{{ alertas_activas }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li><a class="dropdown-item" href="/reemplazos"><i class="fas fa-history"></i>Historial</a></li>
+                            {% if session.rol == 'gerente' %}
+                            <li><a class="dropdown-item" href="/aprobaciones"><i class="fas fa-check-circle"></i>Aprobaciones</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reportes">
+                            <i class="fas fa-file-alt me-1"></i>Reportes
+                        </a>
+                    </li>
+                    
+                    {% if session.rol in ['jefe_ti', 'gerente'] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Administración
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/usuarios"><i class="fas fa-users"></i>Usuarios</a></li>
+                            <li><a class="dropdown-item" href="/usuarios/registrar"><i class="fas fa-user-plus"></i>Nuevo Usuario</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="perfilDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            {{ session.username }}
+                            <span class="badge ms-1">{{ session.rol }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/perfil"><i class="fas fa-id-card"></i>Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- CONTENIDO -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- FOOTER -->
+    <footer class="py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5><i class="fas fa-building me-2"></i>Fiscalía La Libertad</h5>
+                    <p class="small mb-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        Av. América Oeste 2470, Trujillo
+                    </p>
+                    <p class="small mb-2">
+                        <i class="fas fa-phone me-2"></i>
+                        (044) 608-600
+                    </p>
+                    <p class="small mb-0">
+                        <i class="fas fa-envelope me-2"></i>
+                        contacto@mpfn.gob.pe
+                    </p>
+                </div>
+                
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5><i class="fas fa-link me-2"></i>Accesos Rápidos</h5>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <a href="/productos">Catálogo de Productos</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/servicios">Catálogo de Servicios</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/metricas">Indicadores y Métricas</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/reportes">Generación de Reportes</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-4">
+                    <h5><i class="fas fa-info-circle me-2"></i>INVENTECH</h5>
+                    <p class="small">
+                        Sistema de Gestión de Portafolio de Productos y Servicios de Tecnología de la Información
+                    </p>
+                    <p class="small mb-0">
+                        <i class="fas fa-code-branch me-2"></i>Versión 1.0 - 2025
+                    </p>
+                </div>
+            </div>
+            
+            <hr class="my-3" style="opacity: 0.2;">
+            
+            <div class="text-center small">
+                <p class="mb-0">
+                    © 2025 Ministerio Público - Fiscalía de la Nación | Distrito Fiscal de La Libertad
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ✅ SISTEMA DE NOTIFICACIONES CON SONIDO DUAL -->
+    <audio id="alertaSound" preload="auto">
+        <source src="{{ url_for('static', filename='sounds/alerta.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <!-- Toast de Notificación -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="alertaToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+            <div class="toast-header text-white" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                <i class="fas fa-bell me-2" id="alertaIcon"></i>
+                <strong class="me-auto" id="alertaTitulo">Nueva Alerta</strong>
+                <small id="alertaTiempo">Ahora</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" style="background-color: #fff;">
+                <div id="alertaContenido"></div>
+                <div class="mt-3 d-flex gap-2">
+                    <a href="/alertas" class="btn btn-sm btn-danger flex-grow-1">
+                        <i class="fas fa-eye me-1"></i>Ver Alertas
+                    </a>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="toast">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Notificaciones DUAL -->
+    <script>
+    (function() {
+        'use strict';
+        
+        // ====================================
+        // CONFIGURACIÓN
+        // ====================================
+        const CONFIG = {
+            POLLING_INTERVAL: 30000, // 30 segundos
+            SOUND_ON_CLICK: true,     // ✅ Sonido al hacer clic en campanita
+            SOUND_ON_SLA: true,       // ✅ Sonido cuando sobrepasa SLA
+            NOTIFICATION_ENABLED: true,
+            DEBUG: false
+        };
+        
+        let pollingInterval = null;
+        let audioContext = null;
+        let alertasNotificadas = new Set();
+        
+        // ====================================
+        // INICIALIZAR AUDIO
+        // ====================================
+        function inicializarAudio() {
+            try {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                
+                if (audioContext.state === 'suspended') {
+                    document.addEventListener('click', function unlock() {
+                        audioContext.resume().then(() => {
+                            document.removeEventListener('click', unlock);
+                            if (CONFIG.DEBUG) console.log('🔊 Audio desbloqueado');
+                        });
+                    }, { once: true });
+                }
+                
+                if (CONFIG.DEBUG) console.log('🔊 Audio inicializado');
+            } catch (e) {
+                console.warn('⚠️ AudioContext no soportado:', e);
+            }
+        }
+        
+        // ====================================
+        // REPRODUCIR SONIDO
+        // ====================================
+        function reproducirSonido() {
+            try {
+                const audio = document.getElementById('alertaSound');
+                if (!audio) {
+                    if (CONFIG.DEBUG) console.warn('⚠️ Elemento de audio no encontrado');
+                    return;
+                }
+                
+                if (audio.readyState >= 2) {
+                    audio.currentTime = 0;
+                    
+                    const playPromise = audio.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(() => {
+                                if (CONFIG.DEBUG) console.log('🔊 Sonido reproducido correctamente');
+                            })
+                            .catch(error => {
+                                console.warn('⚠️ Error al reproducir sonido:', error);
+                                reproducirSonidoFallback();
+                            });
+                    }
+                } else {
+                    audio.addEventListener('canplaythrough', function() {
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.warn('⚠️ Error reproduciendo:', e));
+                    }, { once: true });
+                }
+            } catch (error) {
+                console.error('❌ Error en reproducirSonido:', error);
+            }
+        }
+        
+        // ====================================
+        // FALLBACK: GENERAR TONO
+        // ====================================
+        function reproducirSonidoFallback() {
+            if (!audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                if (CONFIG.DEBUG) console.log('🔊 Sonido fallback reproducido');
+            } catch (error) {
+                console.error('❌ Error en reproducirSonidoFallback:', error);
+            }
+        }
+        
+        // ====================================
+        // MOSTRAR NOTIFICACIÓN TOAST
+        // ====================================
+        function mostrarNotificacion(alertas) {
+            if (!CONFIG.NOTIFICATION_ENABLED || alertas.length === 0) return;
+            
+            const alerta = alertas[0];
+            
+            if (alertasNotificadas.has(alerta.id)) return;
+            alertasNotificadas.add(alerta.id);
+            
+            const iconos = {
+                'critica': 'fa-exclamation-triangle',
+                'alta': 'fa-exclamation-circle',
+                'media': 'fa-info-circle',
+                'baja': 'fa-check-circle'
+            };
+            
+            const colores = {
+                'critica': 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                'alta': 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                'media': 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)',
+                'baja': 'linear-gradient(135deg, #28a745 0%, #20c997 100%)'
+            };
+            
+            const icono = iconos[alerta.nivel_urgencia] || 'fa-bell';
+            const color = colores[alerta.nivel_urgencia] || colores['critica'];
+            
+            document.getElementById('alertaIcon').className = `fas ${icono} me-2`;
+            document.getElementById('alertaTitulo').textContent = `🚨 Alerta ${alerta.nivel_urgencia.toUpperCase()}`;
+            document.getElementById('alertaTiempo').textContent = 'Ahora';
+            
+            const contenido = `
+                <div class="mb-2">
+                    <strong style="color: #2c3e50;">${alerta.item_codigo} - ${alerta.item_nombre}</strong>
+                </div>
+                <p class="mb-0 small text-muted" style="line-height: 1.5;">
+                    ${alerta.mensaje.substring(0, 150)}${alerta.mensaje.length > 150 ? '...' : ''}
+                </p>
+                ${alertas.length > 1 ? `<p class="mt-2 mb-0 small"><strong>+ ${alertas.length - 1} alerta(s) más</strong></p>` : ''}
+            `;
+            
+            document.getElementById('alertaContenido').innerHTML = contenido;
+            
+            const toastHeader = document.querySelector('#alertaToast .toast-header');
+            toastHeader.style.background = color;
+            
+            const toastElement = document.getElementById('alertaToast');
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: false
+            });
+            toast.show();
+            
+            // ✅ REPRODUCIR SONIDO SOLO SI ES SOBREPASO DE SLA
+            if (CONFIG.SOUND_ON_SLA && alerta.tipo === 'sobrepaso_sla') {
+                reproducirSonido();
+            }
+            
+            if ('Notification' in window && Notification.permission === 'granted') {
+                mostrarNotificacionNavegador(alerta);
+            }
+            
+            if (CONFIG.DEBUG) {
+                console.log('🔔 Notificación mostrada:', alerta);
+            }
+        }
+        
+        // ====================================
+        // NOTIFICACIÓN DEL NAVEGADOR
+        // ====================================
+        function mostrarNotificacionNavegador(alerta) {
+            try {
+                const notification = new Notification('🚨 INVENTECH - Nueva Alerta', {
+                    body: `${alerta.item_codigo}: ${alerta.mensaje.substring(0, 100)}`,
+                    icon: '/static/imagenes/logo.jpg',
+                    badge: '/static/imagenes/logo.jpg',
+                    tag: `alerta-${alerta.id}`,
+                    requireInteraction: true
+                });
+                
+                notification.onclick = function() {
+                    window.focus();
+                    window.location.href = '/alertas';
+                    notification.close();
+                };
+                
+                if (CONFIG.DEBUG) console.log('🔔 Notificación del navegador mostrada');
+            } catch (error) {
+                if (CONFIG.DEBUG) console.warn('⚠️ Error en notificación del navegador:', error);
+            }
+        }
+        
+        // ====================================
+        // VERIFICAR NUEVAS ALERTAS
+        // ====================================
+        function verificarAlertasNuevas() {
+            fetch('/api/alertas/nuevas')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.hay_nuevas) {
+                        if (CONFIG.DEBUG) {
+                            console.log(`🔔 ${data.cantidad} nueva(s) alerta(s) detectada(s)`);
+                        }
+                        mostrarNotificacion(data.alertas);
+                    } else {
+                        if (CONFIG.DEBUG) {
+                            console.log('✅ No hay alertas nuevas');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error verificando alertas:', error);
+                });
+        }
+        
+        // ====================================
+        // SOLICITAR PERMISOS DE NOTIFICACIÓN
+        // ====================================
+        function solicitarPermisosNotificacion() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (CONFIG.DEBUG) {
+                        console.log('🔔 Permiso de notificaciones:', permission);
+                    }
+                });
+            }
+        }
+        
+        // ====================================
+        // INICIAR POLLING
+        // ====================================
+        function iniciarPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            setTimeout(() => {
+                verificarAlertasNuevas();
+            }, 2000);
+            
+            pollingInterval = setInterval(() => {
+                verificarAlertasNuevas();
+            }, CONFIG.POLLING_INTERVAL);
+            
+            if (CONFIG.DEBUG) {
+                console.log(`🔄 Polling iniciado (cada ${CONFIG.POLLING_INTERVAL / 1000}s)`);
+            }
+        }
+        
+        // ====================================
+        // DETENER POLLING
+        // ====================================
+        function detenerPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                if (CONFIG.DEBUG) console.log('⏸️ Polling detenido');
+            }
+        }
+        
+        // ====================================
+        // ✅ FUNCIÓN PÚBLICA: SONIDO AL HACER CLIC EN CAMPANITA
+        // ====================================
+        window.reproducirSonidoCampanita = function() {
+            if (CONFIG.SOUND_ON_CLICK) {
+                reproducirSonido();
+                if (CONFIG.DEBUG) console.log('🔔 Sonido activado por clic en campanita');
+            }
+        };
+        
+        // ====================================
+        // EVENT LISTENERS
+        // ====================================
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                detenerPolling();
+            } else {
+                iniciarPolling();
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (CONFIG.DEBUG) console.log('🚀 Sistema de notificaciones iniciado');
+            
+            inicializarAudio();
+            solicitarPermisosNotificacion();
+            iniciarPolling();
+            
+            const audio = document.getElementById('alertaSound');
+            if (audio) {
+                audio.load();
+            }
+        });
+        
+        window.addEventListener('beforeunload', function() {
+            detenerPolling();
+        });
+        
+        // ====================================
+        // EXPONER FUNCIONES GLOBALES
+        // ====================================
+        window.INVENTECH_Notificaciones = {
+            verificar: verificarAlertasNuevas,
+            reproducirSonido: reproducirSonido,
+            config: CONFIG
+        };
+        
+    })();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
