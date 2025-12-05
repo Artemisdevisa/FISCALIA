@@ -1,3 +1,13 @@
+git add .gitignore
+git commit -m "Resolver conflicto - usar .gitignore local"
+git push origin main
+```
+
+### **Opción 2: Reemplazar todo el contenido**
+
+1. Borra TODO el contenido actual de `.gitignore`
+2. Pega este contenido limpio:
+```
 # ========================================
 # CREDENCIALES Y CONFIGURACIÓN SENSIBLE
 # ========================================
@@ -23,12 +33,30 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # Virtual Environments
 venv/
 env/
 ENV/
 .venv
+env.bak/
+venv.bak/
 
 # ========================================
 # FLASK
@@ -56,3 +84,18 @@ logs/
 # ========================================
 .DS_Store
 Thumbs.db
+
+# ========================================
+# UPLOADS Y ARCHIVOS TEMPORALES
+# ========================================
+uploads/
+temp/
+tmp/
+*.pdf
+
+# ========================================
+# TESTING
+# ========================================
+.pytest_cache/
+.coverage
+htmlcov/
